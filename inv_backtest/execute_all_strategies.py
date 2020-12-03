@@ -1,13 +1,14 @@
 from rqalpha import run_file
 import pandas as pd
+import utility
 
 __config__ = {
     "base": {
         "accounts": {
             "STOCK": 1000 * 10000,
         },
-        "02_data-bundle-path": "/Users/i335644/.rqalpha/bundle",
-        "start_date": "20130101",
+        "data-bundle-path": "/Users/i335644/.rqalpha/bundle",
+        "start_date": "20130105",
         "end_date": "20201109",
     },
     "extra": {
@@ -41,4 +42,4 @@ df_result = df_result.append(inv_by_pe_pb_result['sys_analyser']['summary'], ign
 df_result = df_result.append(portfolio_result['sys_analyser']['summary'], ignore_index=True)
 df_result = df_result.append(portfolio_position_ctl_result['sys_analyser']['summary'], ignore_index=True)
 
-df_result.to_excel('../03_report/mul_strategies_result.xlsx')
+df_result.to_excel('%s/backtest/mul_strategies_result.xlsx' % utility.REPORT_ROOT)

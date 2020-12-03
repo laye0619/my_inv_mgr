@@ -2,13 +2,14 @@ from datetime import timedelta, datetime
 
 from rqalpha import run_file
 import pandas as pd
+import utility
 
 __config__ = {
     "base": {
         "accounts": {
             "STOCK": 1000 * 10000,
         },
-        "02_data-bundle-path": "/Users/i335644/.rqalpha/bundle",
+        "data-bundle-path": "/Users/i335644/.rqalpha/bundle",
         "start_date": "20130105",
         "end_date": "20201109",
     },
@@ -46,4 +47,4 @@ while True:
         df_result = df_result.append(t_ind_result['sys_analyser']['summary'], ignore_index=True)
     start_date = start_date + timedelta(1)
 
-df_result.to_excel('../03_report/t_ind_batch_test_result.xlsx')
+df_result.to_excel('%s/backtest/t_ind_batch_test_result.xlsx' % utility.REPORT_ROOT)

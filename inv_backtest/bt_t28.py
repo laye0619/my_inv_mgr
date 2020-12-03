@@ -1,13 +1,13 @@
 from rqalpha.apis import *
-from strategy_backtest import utility as utility
+import utility
 
 __config__ = {
     "base": {
         "accounts": {
             "STOCK": 1000 * 10000,
         },
-        "02_data-bundle-path": "/Users/i335644/.rqalpha/bundle",
-        "start_date": "20200901",
+        "data-bundle-path": "/Users/i335644/.rqalpha/bundle",
+        "start_date": "20130101",
         "end_date": "20201208",
     },
     "extra": {
@@ -17,7 +17,7 @@ __config__ = {
         "sys_analyser": {
             "plot": True,
             "benchmark": "000300.XSHG",
-            "report_save_path": utility.REPORT_ROOT,
+            "report_save_path": '%s/backtest/' % utility.REPORT_ROOT,
         },
         'sys_simulation': {
             'volume_limit': False,  # 成交量限制，因为买指数，按指数成交，所有金额较大，关闭成交量限制
