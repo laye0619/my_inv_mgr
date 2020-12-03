@@ -29,6 +29,12 @@ def convert_code_2_tusharecode(code):
     return code + mkt_tusharecode
 
 
+def convert_code_2_csvfilename(code):
+    details, _ = read_params()
+    code_mkt = details.loc[details['index_code'] == code, 'index_mkt'].iloc[0]
+    mkt_csvfilenamecode = 'sh' if code_mkt == 'SH' else 'sz'
+    return mkt_tusharecode + code
+
 def back_2_original_code(code):
     return code[:6]
 
