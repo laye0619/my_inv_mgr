@@ -1,4 +1,6 @@
+import calendar
 from abc import abstractmethod, ABCMeta
+
 import pandas as pd
 from numpy import NaN
 
@@ -14,7 +16,7 @@ class IndexPebUpdate(metaclass=ABCMeta):
     def update_pe_pb_2_csv(self, index_list, target_date=None, init=False):
         if init:
             print('init')
-            df_pe_pb = self.__get_index_list_pe_pb(index_list)
+            df_pe_pb = self._get_index_list_pe_pb(index_list)
             for key in df_pe_pb:
                 data_path = '%s/index_pe_pb/%s_pe_pb.csv' % (utility.DATA_ROOT, utility.convert_code_2_csvfilename(key))
                 df_pe_pb[key].dropna().to_csv(data_path)
@@ -44,23 +46,23 @@ class IndexPebUpdate(metaclass=ABCMeta):
 
         print('PE/PB data updated...')
 
-    def __get_index_list_pe_pb(self, idx_list=None, start_date=None, end_date=None):
+    def _get_index_list_pe_pb(self, idx_list=None, start_date=None, end_date=None):
         # 返回字典，key为code，value为dataframe
         # code_list中成立最久的放在最前面
         if start_date is None:
             start_date = date(2005, 1, 4)
         if end_date is None:
-            end_date = pd.datetime.today().date() - timedelta(1)
+            end_date = date.today() - timedelta(1)
         if not idx_list:
             return
-        date_list = self.__get_transaction_date(start_date=start_date, end_date=end_date)
+        date_list = self._get_transaction_date(start_date=start_date, end_date=end_date)
         index_list_dict = {}
         for code in idx_list:
             index_list_dict[code] = pd.DataFrame(index=date_list, data=NaN,
                                                  columns=['price', 'pe1', 'pb1', 'pe2', 'pb2', 'pe3', 'pb3', 'pe4',
                                                           'pb4'])
         for d in date_list:  # 交易日
-            ret_dict = self.__get_index_list_pe_pb_date(d, idx_list)
+            ret_dict = self._get_index_list_pe_pb_date(d, idx_list)
             for key in ret_dict:
                 index_list_dict[key].loc[d]['price'] = ret_dict[key]['price']
                 index_list_dict[key].loc[d]['pe1'] = ret_dict[key]['pe1']
@@ -73,14 +75,17 @@ class IndexPebUpdate(metaclass=ABCMeta):
                 index_list_dict[key].loc[d]['pb4'] = ret_dict[key]['pb4']
         return index_list_dict
 
-    def __get_index_list_pe_pb_date(self, date, code_list=None):
+    def _get_index_list_pe_pb_date(self, date, code_list=None):
         '''指定日期的指数PE_PB'''
         ret_dict = {}
         if not code_list:
             return
         # df_all = get_fundamentals(query(valuation), str(date)[0:10])  # 某日所有股票
         for code in code_list:
-            stocks = self.__get_idx_components(code, self.__get_month_1st_last(date))
+            idx_comp_first_day, inx_comp_last_day = self._get_month_1st_last(date)
+            stocks = self._get_idx_components(code, idx_comp_first_day.strftime('%Y%m%d'),
+                                              inx_comp_last_day.strftime('%Y%m%d'))
+            #TODO here
             df = df_all[df_all['code'].isin(stocks)]  # 某个指数
             price = get_price(code, start_date=date, end_date=date, fields='close', panel=False).iloc[0, 0]
             if len(df) > 0:
@@ -106,21 +111,29 @@ class IndexPebUpdate(metaclass=ABCMeta):
                                   'pe4': round(pe4, 2), 'pb4': round(pb4, 2), }
         return ret_dict
 
-    def __get_month_1st_last(date_str):
-        year = date_str[:4]
-        month = date_str[4:6]
+    @staticmethod
+    def _get_month_1st_last(date_str):
+        year = int(date_str[:4])
+        month = int(date_str[4:6])
 
+        # 获取当月第一天的星期和当月的总天数
+        first_day_week_day, month_range = calendar.monthrange(year, month)
+
+        # 获取当月的第一天
+        first_day = date(year=year, month=month, day=1)
+        last_day = date(year=year, month=month, day=month_range)
+        return first_day, last_day
 
     @abstractmethod
-    def __get_close_price(self, code, start_date, end_date):
+    def _get_close_price(self, code, start_date, end_date):
         raise NotImplementedError("Please implement your function in your class")
 
     @abstractmethod
-    def __get_transaction_date(self, start_date, end_date):
+    def _get_transaction_date(self, start_date, end_date):
         raise NotImplementedError("Please implement your function in your class")
 
     @abstractmethod
-    def __get_idx_components(self, code, date):
+    def _get_idx_components(self, code, first_day, last_day):
         raise NotImplementedError("Please implement your function in your class")
 
 
@@ -130,16 +143,16 @@ class IndexPebUpdateByTushare(IndexPebUpdate):
         self.pro = ts.pro_api('602e5ad960d66ab8b1f3c13b4fd746f5323ff808b0820768b02c6da3')
 
     # 隔离数据源
-    def __get_close_price(self, code, start_date, end_date):
+    def _get_close_price(self, code, start_date, end_date):
         return pd.DataFrame()
 
-    def __get_transaction_date(self, start_date, end_date):
+    def _get_transaction_date(self, start_date, end_date):
         return self.pro.trade_cal(exchange='', start_date=start_date.strftime('%Y%m%d'),
                                   end_date=end_date.strftime('%Y%m%d'),
                                   fields='cal_date', is_open='1').cal_date
 
-    def __get_idx_components(self, code, date):
-        return self.pro.index_weight(index_code=code, start_date='20050101', end_date='20050331')
+    def _get_idx_components(self, code, first_day, last_day):
+        return self.pro.index_weight(index_code=code, start_date=first_day, end_date=last_day)
 
 
 if __name__ == '__main__':
