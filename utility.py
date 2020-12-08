@@ -35,7 +35,11 @@ def convert_code_2_csvfilename(code):
     mkt_csvfilenamecode = 'sh' if code_mkt == 'SH' else 'sz'
     return mkt_csvfilenamecode + code
 
+
 def back_2_original_code(code):
     return code[:6]
 
 
+def get_name_from_ori_code(code):
+    details, _ = read_params()
+    return details.loc[details['index_code'] == code, 'index_name'].iloc[0]

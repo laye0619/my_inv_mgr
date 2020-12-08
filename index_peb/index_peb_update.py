@@ -1,15 +1,12 @@
 import calendar
 import os
 from abc import abstractmethod, ABCMeta
-
-import pandas as pd
-from numpy import NaN, mean
-from scipy.stats import mstats
-
 import utility
 import tushare as ts
 from datetime import timedelta, date
-import time
+import pandas as pd
+from numpy import NaN, mean
+from scipy.stats import mstats
 
 
 class IndexPebUpdate(metaclass=ABCMeta):
@@ -59,7 +56,7 @@ class IndexPebUpdate(metaclass=ABCMeta):
         # 返回字典，key为code，value为dataframe
         # code_list中成立最久的放在最前面
         if start_date is None:
-            start_date = date(2005, 1, 1)
+            start_date = date(2020, 12, 1)
         if end_date is None:
             end_date = date.today() - timedelta(1)
         if not idx_list:
@@ -92,12 +89,13 @@ class IndexPebUpdate(metaclass=ABCMeta):
             return
         df_all = self._get_fundamentals(date)
         for code in code_list:
-            idx_comp_first_day, inx_comp_last_day = self._get_last_month_1st_last(date)
-            stocks = self._get_idx_components(code, idx_comp_first_day.strftime('%Y%m%d'),
-                                              inx_comp_last_day.strftime('%Y%m%d')).con_code
+            stocks = self._get_idx_components(code, end_date=date).con_code
             df = df_all[df_all['ts_code'].isin(stocks)]  # 某个指数
-            if len(stocks) > 0:  # 该日如果指数还未上市，则跳过
-                price = self._get_close_price(code, start_date=date, end_date=date).close.iloc[0]
+            price = self._get_close_price(code, start_date=date, end_date=date)
+            if len(price) > 0:  # 如果数据源中没有价格数据，则置0
+                price = price.close.iloc[0]
+            else:
+                price = 0
             if len(df) > 0:
                 # 整体法，市值加权
                 df = df.dropna()  # 去除空值
@@ -140,7 +138,7 @@ class IndexPebUpdate(metaclass=ABCMeta):
         raise NotImplementedError("Please implement your function in your class")
 
     @abstractmethod
-    def _get_idx_components(self, code, first_day, last_day):
+    def _get_idx_components(self, code, end_date):
         raise NotImplementedError("Please implement your function in your class")
 
 
@@ -162,8 +160,11 @@ class IndexPebUpdateByTushare(IndexPebUpdate):
                                   end_date=end_date.strftime('%Y%m%d'),
                                   fields='cal_date', is_open='1').cal_date
 
-    def _get_idx_components(self, code, first_day, last_day):
-        return self.pro.index_weight(index_code=code, start_date=first_day, end_date=last_day)
+    def _get_idx_components(self, code, end_date):
+        df = self.pro.index_weight(index_code=code, end_date=end_date)
+        last_trade_date = df.iloc[0].trade_date
+        df = df.loc[df['trade_date'] == last_trade_date]
+        return df
 
 
 if __name__ == '__main__':
