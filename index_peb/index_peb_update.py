@@ -1,8 +1,10 @@
 import calendar
+import os
 from abc import abstractmethod, ABCMeta
 
 import pandas as pd
-from numpy import NaN
+from numpy import NaN, mean
+from scipy.stats import mstats
 
 import utility
 import tushare as ts
@@ -18,20 +20,25 @@ class IndexPebUpdate(metaclass=ABCMeta):
             print('init')
             df_pe_pb = self._get_index_list_pe_pb(index_list)
             for key in df_pe_pb:
-                data_path = '%s/index_pe_pb/%s_pe_pb.csv' % (utility.DATA_ROOT, utility.convert_code_2_csvfilename(key))
+                data_path = '%s/index_pe_pb/%s_pe_pb.csv' % (
+                    utility.DATA_ROOT, utility.convert_code_2_csvfilename(utility.back_2_original_code(key)))
                 df_pe_pb[key].dropna().to_csv(data_path)
         else:
-            for ori_code in list(self.__df_index['jqdata_code']):
-                data_path = '%s%s_pe_pb.csv' % (self.__data_root, self.__convert_code(ori_code))
+            for ori_code in index_list:
+                data_path = '%s/index_pe_pb/%s_pe_pb.csv' % (
+                    utility.DATA_ROOT, utility.convert_code_2_csvfilename(utility.back_2_original_code(ori_code)))
                 if os.path.exists(data_path):  # existed csv file, go update incrementally
-                    df = self.__pd_read_csv(data_path)
+                    df = pd.read_csv(data_path, parse_dates=True, index_col=0)
                     df_pe_pb = pd.DataFrame()
-                    start_date = df.iloc[-1].name + timedelta(1)
+                    start_date = pd.to_datetime(df.iloc[-1].name) + timedelta(1)
                     if target_date is None or target_date >= start_date:
                         print('incrementally update pe&pb for %s' % ori_code)
-                        df_pe_pb = self.__get_index_list_pe_pb([ori_code], start_date, target_date)
+                        df_pe_pb = self._get_index_list_pe_pb([ori_code], start_date, target_date)
                         for key in df_pe_pb:
-                            df = self.__pd_read_csv('%s%s_pe_pb.csv' % (self.__data_root, self.__convert_code(key)))
+                            df = pd.read_csv('%s/index_pe_pb/%s_pe_pb.csv' % (
+                                utility.DATA_ROOT,
+                                utility.convert_code_2_csvfilename(utility.back_2_original_code(key))),
+                                             parse_dates=True, index_col=0)
                             delta_df = df_pe_pb[key][df.iloc[-1].name + timedelta(1):]  # 多个指数数据有可能不同步
                             if len(delta_df) > 0:
                                 df_pe_pb[key] = pd.concat([df, delta_df])
@@ -39,9 +46,10 @@ class IndexPebUpdate(metaclass=ABCMeta):
                                 df_pe_pb[key] = df
                 else:
                     print('adding new pe&pb for %s' % ori_code)
-                    df_pe_pb = self.__get_index_list_pe_pb([ori_code])
+                    df_pe_pb = self._get_index_list_pe_pb([ori_code])
                 for key in df_pe_pb:
-                    data_path = '%s%s_pe_pb.csv' % (self.__data_root, self.__convert_code(key))
+                    data_path = '%s/index_pe_pb/%s_pe_pb.csv' % (
+                        utility.DATA_ROOT, utility.convert_code_2_csvfilename(utility.back_2_original_code(key)))
                     df_pe_pb[key].dropna().to_csv(data_path)
 
         print('PE/PB data updated...')
@@ -50,7 +58,7 @@ class IndexPebUpdate(metaclass=ABCMeta):
         # 返回字典，key为code，value为dataframe
         # code_list中成立最久的放在最前面
         if start_date is None:
-            start_date = date(2005, 1, 4)
+            start_date = date(2005, 1, 1)
         if end_date is None:
             end_date = date.today() - timedelta(1)
         if not idx_list:
@@ -62,6 +70,7 @@ class IndexPebUpdate(metaclass=ABCMeta):
                                                  columns=['price', 'pe1', 'pb1', 'pe2', 'pb2', 'pe3', 'pb3', 'pe4',
                                                           'pb4'])
         for d in date_list:  # 交易日
+            print('processing %s data...' % d)
             ret_dict = self._get_index_list_pe_pb_date(d, idx_list)
             for key in ret_dict:
                 index_list_dict[key].loc[d]['price'] = ret_dict[key]['price']
@@ -80,29 +89,28 @@ class IndexPebUpdate(metaclass=ABCMeta):
         ret_dict = {}
         if not code_list:
             return
-        # df_all = get_fundamentals(query(valuation), str(date)[0:10])  # 某日所有股票
+        df_all = self._get_fundamentals(date)
         for code in code_list:
-            idx_comp_first_day, inx_comp_last_day = self._get_month_1st_last(date)
+            idx_comp_first_day, inx_comp_last_day = self._get_last_month_1st_last(date)
             stocks = self._get_idx_components(code, idx_comp_first_day.strftime('%Y%m%d'),
-                                              inx_comp_last_day.strftime('%Y%m%d'))
-            #TODO here
-            df = df_all[df_all['code'].isin(stocks)]  # 某个指数
-            price = get_price(code, start_date=date, end_date=date, fields='close', panel=False).iloc[0, 0]
+                                              inx_comp_last_day.strftime('%Y%m%d')).con_code
+            df = df_all[df_all['ts_code'].isin(stocks)]  # 某个指数
+            if len(stocks) > 0:  # 该日如果指数还未上市，则跳过
+                price = self._get_close_price(code, start_date=date, end_date=date).close.iloc[0]
             if len(df) > 0:
                 # 整体法，市值加权
-                df = df[df.pb_ratio != 0]  # 去除0
-                df = df[df.pe_ratio != 0]  # 去除0
-                pe1 = sum(df.market_cap) / sum(df.market_cap / df.pe_ratio)
-                pb1 = sum(df.market_cap) / sum(df.market_cap / df.pb_ratio)
+                df = df.dropna()  # 去除空值
+                pe1 = sum(df.circ_mv) / sum(df.circ_mv / df.pe_ttm)
+                pb1 = sum(df.circ_mv) / sum(df.circ_mv / df.pb)
                 # 等权，亏损置零
-                pe2 = len(df) / sum(1 / df.pe_ratio[df.pe_ratio > 0])
-                pb2 = len(df) / sum(1 / df.pb_ratio[df.pb_ratio > 0])
+                pe2 = len(df) / sum(1 / df.pe_ttm[df.pe_ttm > 0])
+                pb2 = len(df) / sum(1 / df.pb[df.pb > 0])
                 # 中位数，无需预处理
-                pe3 = df.pe_ratio.median()
-                pb3 = df.pb_ratio.median()
+                pe3 = df.pe_ttm.median()
+                pb3 = df.pb.median()
                 # 算数平均，取分位数95%置信区间
-                pe4 = mean(mstats.winsorize(df.pe_ratio, limits=0.025))
-                pb4 = mean(mstats.winsorize(df.pb_ratio, limits=0.025))
+                pe4 = mean(mstats.winsorize(df.pe_ttm, limits=0.025))
+                pb4 = mean(mstats.winsorize(df.pb, limits=0.025))
 
                 ret_dict[code] = {'price': price,
                                   'pe1': round(pe1, 2), 'pb1': round(pb1, 2),
@@ -112,17 +120,15 @@ class IndexPebUpdate(metaclass=ABCMeta):
         return ret_dict
 
     @staticmethod
-    def _get_month_1st_last(date_str):
-        year = int(date_str[:4])
-        month = int(date_str[4:6])
+    def _get_last_month_1st_last(date_str):
+        today = pd.to_datetime(date_str)
+        last_day_of_last_month = date(today.year, today.month, 1) - timedelta(1)
+        first_day_of_last_month = date(last_day_of_last_month.year, last_day_of_last_month.month, 1)
+        return first_day_of_last_month, last_day_of_last_month
 
-        # 获取当月第一天的星期和当月的总天数
-        first_day_week_day, month_range = calendar.monthrange(year, month)
-
-        # 获取当月的第一天
-        first_day = date(year=year, month=month, day=1)
-        last_day = date(year=year, month=month, day=month_range)
-        return first_day, last_day
+    @abstractmethod
+    def _get_fundamentals(self, current_date):
+        raise NotImplementedError("Please implement your function in your class")
 
     @abstractmethod
     def _get_close_price(self, code, start_date, end_date):
@@ -143,8 +149,12 @@ class IndexPebUpdateByTushare(IndexPebUpdate):
         self.pro = ts.pro_api('602e5ad960d66ab8b1f3c13b4fd746f5323ff808b0820768b02c6da3')
 
     # 隔离数据源
+    def _get_fundamentals(self, current_date):
+        return self.pro.daily_basic(ts_code='', trade_date=current_date,
+                                    fields='ts_code,trade_date,pe,pe_ttm,pb,circ_mv')
+
     def _get_close_price(self, code, start_date, end_date):
-        return pd.DataFrame()
+        return self.pro.index_daily(ts_code=code, start_date=start_date, end_date=end_date)
 
     def _get_transaction_date(self, start_date, end_date):
         return self.pro.trade_cal(exchange='', start_date=start_date.strftime('%Y%m%d'),
@@ -157,4 +167,6 @@ class IndexPebUpdateByTushare(IndexPebUpdate):
 
 if __name__ == '__main__':
     index_peb_update = IndexPebUpdateByTushare()
-    index_peb_update.update_pe_pb_2_csv(['000905.SH'], init=True)
+    index_params, _ = utility.read_params()
+    index_list = index_params.index_code.apply(utility.convert_code_2_tusharecode).tolist()
+    index_peb_update.update_pe_pb_2_csv(index_list, init=True)
