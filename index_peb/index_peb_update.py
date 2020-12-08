@@ -56,7 +56,7 @@ class IndexPebUpdate(metaclass=ABCMeta):
         # 返回字典，key为code，value为dataframe
         # code_list中成立最久的放在最前面
         if start_date is None:
-            start_date = date(2020, 12, 1)
+            start_date = date(2005, 1, 1)
         if end_date is None:
             end_date = date.today() - timedelta(1)
         if not idx_list:
@@ -162,8 +162,9 @@ class IndexPebUpdateByTushare(IndexPebUpdate):
 
     def _get_idx_components(self, code, end_date):
         df = self.pro.index_weight(index_code=code, end_date=end_date)
-        last_trade_date = df.iloc[0].trade_date
-        df = df.loc[df['trade_date'] == last_trade_date]
+        if len(df) > 0:
+            last_trade_date = df.iloc[0].trade_date
+            df = df.loc[df['trade_date'] == last_trade_date]
         return df
 
 
