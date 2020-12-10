@@ -1,9 +1,9 @@
 字段,释意
-cp,___
-date,__
-pb_avg,pb-___
-pb_ew,pb-__
-pb_ewpvo,pb-____
+cp,收盘价
+date,日期
+pb_avg,pb-平均值
+pb_ew,pb-等权
+pb_ewpvo,pb-正数等权
 pb_fs_avg_avgv,pb-___-____-___
 pb_fs_avg_cv,pb-___-____-___
 pb_fs_avg_cvpos,
