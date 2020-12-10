@@ -43,3 +43,13 @@ def back_2_original_code(code):
 def get_name_from_ori_code(code):
     details, _ = read_params()
     return details.loc[details['index_code'] == code, 'index_name'].iloc[0]
+
+
+def get_cn_desc_from_index_peb_field(field_name):
+    result = pd.read_csv('%s/index_peb/data_dict.csv' % DATA_ROOT)
+    return result.loc[result['Field'] == field_name, 'Desc'].iloc[0]
+
+
+if __name__ == '__main__':
+    desc = get_cn_desc_from_index_peb_field('pb_fs_avg_cvpos')
+    pass
