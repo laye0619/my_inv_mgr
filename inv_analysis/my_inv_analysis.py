@@ -1,33 +1,32 @@
 # 运行我的资产分析
 
-from my_inv_analysis import my_inv
+import my_inv
 import datetime
-import jqdatasdk as jq
 import utility
 
 # 数据准备
-excelPath = '%s/my_inv_month_end_closing/资产明细表_202008.xlsx' % utility.DATA_ROOT
+excelPath = '%s/my_inv_month_end_closing/资产明细表_202011.xlsx' % utility.DATA_ROOT
 my_investment_analysis = my_inv.MyInvestmentAnalysis()
 my_investment_analysis.data_preparation(excelPath)
 
 # 分析目前比较基准已经有的涨幅
 # jq.auth('18500150123', 'YanTeng881128')
-profit_calculate_stock_dict = {'沪深300': '000300.XSHG',
-                               '中证500': '000905.XSHG',
-                               '上证50': '000016.XSHG',
-                               '中证红利': '000922.XSHG',
-                               '创业板指': '399006.XSHE',
-                               '中证养老': '399812.XSHE',
-                               '全指医药': '000933.XSHG',
-                               '全指消费': '000990.XSHG',
-                               '中证传媒': '399971.XSHE',
-                               '中证环保': '000827.XSHG',
-                               '证券公司': '399975.XSHE',
-                               '全指金融': '000992.XSHG'
+profit_calculate_stock_dict = {'沪深300': '000300.SH',
+                               '中证500': '000905.SH',
+                               '上证50': '000016.SH',
+                               '中证红利': '000922.SH',
+                               '创业板指': '399006.SZ',
+                               '中证养老': '399812.SZ',
+                               '全指医药': '000933.SH',
+                               '全指消费': '000990.SH',
+                               '中证传媒': '399971.SZ',
+                               '中证环保': '000827.SH',
+                               '证券公司': '399975.SZ',
+                               '全指金融': '000992.SH'
                                }
 
 profit_df = my_investment_analysis.analyze_profit(profit_calculate_stock_dict, datetime.date(2019, 3, 1),
-                                                  datetime.date(2020, 9, 1))
+                                                  datetime.date(2020, 11, 30))
 print(profit_df)
 
 # # 给定期间内，投资项目利润、利润率柱状图

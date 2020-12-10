@@ -3,7 +3,7 @@
 # 我的资产分析类定义
 import datetime
 
-# import jqdatasdk as jq
+import tushare as ts
 import matplotlib as mpl
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
@@ -17,7 +17,7 @@ mpl.use('TkAgg')
 
 class MyInvestmentAnalysis:
     def __init__(self):
-        # jq.auth('18500150123', 'YanTeng881128')
+
         mpl.rcParams[u'font.sans-serif'] = ['SimHei']
         mpl.rcParams['axes.unicode_minus'] = False
 

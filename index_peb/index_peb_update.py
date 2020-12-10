@@ -1,5 +1,6 @@
 import calendar
 import os
+import time
 from abc import abstractmethod, ABCMeta
 import utility
 import tushare as ts
@@ -58,7 +59,8 @@ class IndexPebUpdate(metaclass=ABCMeta):
         if start_date is None:
             start_date = date(2005, 1, 1)
         if end_date is None:
-            end_date = date.today() - timedelta(1)
+            # end_date = date.today() - timedelta(1)
+            end_date = date(2007, 12, 31)
         if not idx_list:
             return
         date_list = self._get_transaction_date(start_date=start_date, end_date=end_date)
@@ -89,7 +91,7 @@ class IndexPebUpdate(metaclass=ABCMeta):
             return
         df_all = self._get_fundamentals(date)
         for code in code_list:
-            stocks = self._get_idx_components(code, end_date=date).con_code
+            stocks = self._get_idx_components(code, end_date=date)
             df = df_all[df_all['ts_code'].isin(stocks)]  # 某个指数
             price = self._get_close_price(code, start_date=date, end_date=date)
             if len(price) > 0:  # 如果数据源中没有价格数据，则置0
@@ -146,26 +148,60 @@ class IndexPebUpdateByTushare(IndexPebUpdate):
     def __init__(self):
         super()
         self.pro = ts.pro_api('602e5ad960d66ab8b1f3c13b4fd746f5323ff808b0820768b02c6da3')
+        self.index_stock_holding = pd.read_csv('%s/index_stock_holding_202012.csv' % utility.DATA_ROOT)  #ts数据不全，从joinquant上取得
 
     # 隔离数据源
     def _get_fundamentals(self, current_date):
-        return self.pro.daily_basic(ts_code='', trade_date=current_date,
-                                    fields='ts_code,trade_date,pe,pe_ttm,pb,circ_mv')
+        for _ in range(5):
+            try:
+                result_df = self.pro.daily_basic(ts_code='', trade_date=current_date,
+                                                 fields='ts_code,trade_date,pe,pe_ttm,pb,circ_mv')
+            except:
+                print('network error, try in 1 sec.')
+                time.sleep(1)
+            else:
+                return result_df
 
     def _get_close_price(self, code, start_date, end_date):
-        return self.pro.index_daily(ts_code=code, start_date=start_date, end_date=end_date)
+        for _ in range(5):
+            try:
+                result_df = self.pro.index_daily(ts_code=code, start_date=start_date, end_date=end_date)
+            except:
+                print('network error, try in 1 sec.')
+                time.sleep(1)
+            else:
+                return result_df
 
     def _get_transaction_date(self, start_date, end_date):
-        return self.pro.trade_cal(exchange='', start_date=start_date.strftime('%Y%m%d'),
-                                  end_date=end_date.strftime('%Y%m%d'),
-                                  fields='cal_date', is_open='1').cal_date
+        for _ in range(5):
+            try:
+                result_df = self.pro.trade_cal(exchange='', start_date=start_date.strftime('%Y%m%d'),
+                                               end_date=end_date.strftime('%Y%m%d'),
+                                               fields='cal_date', is_open='1').cal_date
+            except:
+                print('network error, try in 1 sec.')
+                time.sleep(1)
+            else:
+                return result_df
 
     def _get_idx_components(self, code, end_date):
-        df = self.pro.index_weight(index_code=code, end_date=end_date)
-        if len(df) > 0:
-            last_trade_date = df.iloc[0].trade_date
-            df = df.loc[df['trade_date'] == last_trade_date]
-        return df
+        result_list_ts_code = []
+        rqcode = utility.convert_code_2_rqcode(utility.back_2_original_code(code))
+        result_list = self.index_stock_holding.loc[
+            pd.to_datetime(self.index_stock_holding['Unnamed: 0']) < end_date, rqcode]
+        result_list = pd.Series(result_list).dropna()
+        if len(result_list) == 0:
+            return result_list_ts_code
+        else:
+            result_list = result_list.iloc[-1]
+        result_list = eval(result_list)
+
+        for code in result_list:
+            if code[6:] == '.XSHE':
+                result_list_ts_code.append(code[0:6] + '.SZ')
+            elif code[6:] == '.XSHG':
+                result_list_ts_code.append(code[0:6] + '.SH')
+        return result_list_ts_code
 
 
 if __name__ == '__main__':
