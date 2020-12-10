@@ -11,7 +11,7 @@
     <option name="IS_MODULE_SDK" value="false" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
-    <option name="SCRIPT_NAME" value="$USER_HOME$/opt/anaconda3/envs/rqalpha/bin/rqalpha" />
+    <option name="SCRIPT_NAME" value="$USER_HOME$/opt/anaconda3/envs/inv_mgr/bin/rqalpha" />
     <option name="PARAMETERS" value="run -f bt_inv_by_pe_pb.py" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
