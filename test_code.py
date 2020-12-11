@@ -1,6 +1,5 @@
 from abc import abstractmethod, ABCMeta
 
-
 import utility as ut
 import tushare as ts
 import xalpha as xa
@@ -13,3 +12,8 @@ import utility
 # print(ut.PARAMS_ROOT)
 #
 # pro = ts.pro_api('602e5ad960d66ab8b1f3c13b4fd746f5323ff808b0820768b02c6da3')
+
+df = pd.DataFrame()
+seri = pd.Series(['aa', 'aaa', 'aaaa'])
+df['a'] = seri
+pass

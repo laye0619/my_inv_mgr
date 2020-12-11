@@ -384,9 +384,7 @@ def plot_pe_bin(index_code, cal_method=2, interval=20):
     pe_bin = pd.value_counts(score_cat)
     pe_bin = pe_bin.sort_index()
     pe_bin.plot(kind='bar', rot=75)
-    plt.title('%s PE Bins Report - Current PE is %.2f' % (
-        utility.get_name_from_ori_code(utility.back_2_original_code(df_pe.columns[0])),
-        df_pe.iloc[-1, 0]))
+    plt.title('%s PE Bins Report - Current PE is %.2f' % (utility.get_name_from_ori_code(df.columns[0]), df.iloc[-1, 0]))
     plt.show()
 
 

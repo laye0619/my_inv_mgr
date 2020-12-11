@@ -2,7 +2,6 @@ import index_peb_analysis
 import pandas as pd
 import datetime
 
-# TODO to change code here after updating peb
 report_root = './report/'
 params_root = './params/'
 
