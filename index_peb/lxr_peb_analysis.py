@@ -214,5 +214,5 @@ if __name__ == '__main__':
 
     # plot_index_peb_bin('000905', start_date=None, end_date=None, method='ewpvo', peb='pe', interval=30)
 
-    get_index_peb_percentile('000905', date_str='20201111', period='y10')
+    result = get_index_peb_percentile('000905', date_str='20201211', period='y10')
     pass
