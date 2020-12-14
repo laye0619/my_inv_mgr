@@ -1,7 +1,10 @@
+from datetime import date, timedelta
+
 import pandas as pd
 import utility
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import tushare as ts
 
 mpl.use('TkAgg')
 mpl.rcParams[u'font.sans-serif'] = ['SimHei']
@@ -195,6 +198,20 @@ def __read_peb_file(index_code, field_list=None):
             field_list.append('date')
         return df[field_list]
 
+
+def cal_index_corr(index_list, period=10):
+    end_date = date.today()
+    start_date = end_date - timedelta(period * 365)
+    pro = ts.pro_api('602e5ad960d66ab8b1f3c13b4fd746f5323ff808b0820768b02c6da3')
+    pro = pro.trade_cal(exchange='', start_date='20180101', end_date='20181231')
+    for code in index_list:
+    df_price = self.__index_data_operation.build_historical_price()
+    df_price = df_price[index_list].dropna(how='all')
+    for idx in df_price.columns:
+        df_price.rename(columns={idx: self.__index_data_operation.get_index_name_from_index_code(idx)},
+                        inplace=True)
+    df_pe_corr = df_price.corr()
+    return df_pe_corr
 
 def __ffloat(data_in):
     return float('%.2f' % data_in)
