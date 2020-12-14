@@ -8,21 +8,33 @@ mpl.rcParams[u'font.sans-serif'] = ['SimHei']
 mpl.rcParams['axes.unicode_minus'] = False
 
 
-def get_index_peb_percentile(index_code, date, period='fs'):
+def get_index_peb_percentile(index_code, date_str, period='fs'):
     '''
     某日某指数peb百分比情况
     :param period: fs or y10 or y5
     :param index_code:
-    :param date:
+    :param date_str:
     :return:
     '''
-    params_dict = {'pe': 'pe_ttm',
-                   'pb': 'pb',
-                   'method_avg': 'avg',
-                   'method_ew': 'ew',
-                   'method_ewpvo': 'ewpvo',
-                   'method_median': 'median',
-                   'method_mcw': 'mcw'}
+    column_param = ['avgv', 'cv', 'cvpos', 'maxpv', 'maxv', 'minv', 'q2v', 'q5v', 'q8v']
+    row_param = ['pe_ttm_%s_avg_' % period, 'pe_ttm_%s_ewpvo_' % period, 'pe_ttm_%s_ew_' % period,
+                 'pe_ttm_%s_median_' % period, 'pe_ttm_%s_mcw_' % period,
+                 'pb_%s_avg_' % period, 'pb_%s_ewpvo_' % period, 'pb_%s_ew_' % period, 'pb_%s_median_' % period,
+                 'pb_%s_mcw_' % period]
+    result_df = pd.DataFrame([], columns=column_param)
+    for row in row_param:
+        row_df = get_indexes_peb_fields_by_date([index_code], date_str=date_str,
+                                                field_list=[row + col_str for col_str in column_param])
+        if len(row_df) > 0:
+            row_df.columns = column_param
+            result_df = result_df.append(row_df.iloc[0])
+        result_df.rename(index={index_code: row}, inplace=True)
+    result_df = result_df.applymap(__ffloat)
+
+    # 改行名和列名
+    result_df.columns = ['平均值', '当前值', '当前分位点', '最大正值', '最大值', '最小值', '20%分位点', '50%分位点', '80%分位点']
+    result_df.index = ['PE平均值法', 'PE正数等权', 'PE等权', 'PE中位数', 'PE加权法', 'PB平均值法', 'PB正数等权', 'PB等权', 'PB中位数', 'PB加权法']
+    return result_df
 
 
 def plot_index_peb_bin(index_code, start_date=None, end_date=None, method='ewpvo', peb='pe', interval=20):
@@ -200,5 +212,7 @@ if __name__ == '__main__':
 
     # plot_index_peb_hist('000905', start_date=None, end_date=None, method='mcw', peb='pb')
 
-    plot_index_peb_bin('000905', start_date=None, end_date=None, method='ewpvo', peb='pe', interval=30)
+    # plot_index_peb_bin('000905', start_date=None, end_date=None, method='ewpvo', peb='pe', interval=30)
+
+    get_index_peb_percentile('000905', date_str='20201111', period='y10')
     pass
