@@ -8,6 +8,23 @@ mpl.rcParams[u'font.sans-serif'] = ['SimHei']
 mpl.rcParams['axes.unicode_minus'] = False
 
 
+def get_index_peb_percentile(index_code, date, period='fs'):
+    '''
+    某日某指数peb百分比情况
+    :param period: fs or y10 or y5
+    :param index_code:
+    :param date:
+    :return:
+    '''
+    params_dict = {'pe': 'pe_ttm',
+                   'pb': 'pb',
+                   'method_avg': 'avg',
+                   'method_ew': 'ew',
+                   'method_ewpvo': 'ewpvo',
+                   'method_median': 'median',
+                   'method_mcw': 'mcw'}
+
+
 def plot_index_peb_bin(index_code, start_date=None, end_date=None, method='ewpvo', peb='pe', interval=20):
     if peb == 'pe':
         field = 'pe_ttm_' + method

@@ -13,7 +13,11 @@ import utility
 #
 # pro = ts.pro_api('602e5ad960d66ab8b1f3c13b4fd746f5323ff808b0820768b02c6da3')
 
-df = pd.DataFrame()
-seri = pd.Series(['aa', 'aaa', 'aaaa'])
-df['a'] = seri
-pass
+# df = pd.DataFrame()
+# seri = pd.Series(['aa', 'aaa', 'aaaa'])
+# df['a'] = seri
+# pass
+
+
+import matplotlib
+print(matplotlib.matplotlib_fname())
