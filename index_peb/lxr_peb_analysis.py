@@ -5,6 +5,8 @@ import utility
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import tushare as ts
+import xalpha as xa
+import datetime
 
 mpl.use('TkAgg')
 mpl.rcParams[u'font.sans-serif'] = ['SimHei']
@@ -200,18 +202,25 @@ def __read_peb_file(index_code, field_list=None):
 
 
 def cal_index_corr(index_list, period=10):
-    end_date = date.today()
+    end_date = date.today() - timedelta(1)
     start_date = end_date - timedelta(period * 365)
     pro = ts.pro_api('602e5ad960d66ab8b1f3c13b4fd746f5323ff808b0820768b02c6da3')
-    pro = pro.trade_cal(exchange='', start_date='20180101', end_date='20181231')
+    trade_cal = pro.trade_cal(exchange='', start_date=start_date.strftime('%Y%m%d'),
+                              end_date=end_date.strftime('%Y%m%d'), is_open=1).cal_date
+    result_df = pd.DataFrame(index=trade_cal)
     for code in index_list:
-    df_price = self.__index_data_operation.build_historical_price()
-    df_price = df_price[index_list].dropna(how='all')
-    for idx in df_price.columns:
-        df_price.rename(columns={idx: self.__index_data_operation.get_index_name_from_index_code(idx)},
-                        inplace=True)
-    df_pe_corr = df_price.corr()
-    return df_pe_corr
+        df_temp = xa.indexinfo(utility.convert_code_2_xalphacode(code)).price
+        df_temp = df_temp[df_temp['date'] >= start_date.strftime('%Y-%m-%d')]
+        df_temp = df_temp[df_temp['date'] <= end_date.strftime('%Y-%m-%d')]
+        df_temp.index = df_temp['date']
+        df_temp.index = pd.to_datetime(df_temp.index).strftime('%Y%m%d')
+        df_temp = df_temp['totvalue']
+        result_df[code] = df_temp
+    result_df.dropna(how='all', inplace=True)
+    result_df.columns = [utility.get_name_from_ori_code(c) for c in result_df.columns.values]
+    result_df = result_df.corr()
+    return result_df
+
 
 def __ffloat(data_in):
     return float('%.2f' % data_in)
@@ -219,7 +228,7 @@ def __ffloat(data_in):
 
 if __name__ == '__main__':
     index_list, _ = utility.read_params()
-    index_list = index_list['index_code'].tolist()
+    index_list = index_list['index_code'].drop_duplicates().tolist()
 
     # plot_indexes_peb_with_given_method(index_list=index_list,
     #                                    start_date='20120101',
@@ -231,5 +240,7 @@ if __name__ == '__main__':
 
     # plot_index_peb_bin('000905', start_date=None, end_date=None, method='ewpvo', peb='pe', interval=30)
 
-    result = get_index_peb_percentile('000905', date_str='20201211', period='y10')
+    # result = get_index_peb_percentile('000905', date_str='20201211', period='y10')
+    corr_df = cal_index_corr(index_list)
+    corr_df.min()
     pass

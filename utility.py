@@ -29,6 +29,13 @@ def convert_code_2_tusharecode(code):
     return code + mkt_tusharecode
 
 
+def convert_code_2_xalphacode(code):
+    details, _ = read_params()
+    code_mkt = details.loc[details['index_code'] == code, 'index_mkt'].iloc[0]
+    mkt_xalphacode = '0' if code_mkt == 'SH' else '1'
+    return mkt_xalphacode + code
+
+
 def convert_code_2_csvfilename(code):
     details, _ = read_params()
     code_mkt = details.loc[details['index_code'] == code, 'index_mkt'].iloc[0]
