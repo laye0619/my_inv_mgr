@@ -42,6 +42,20 @@ def get_index_peb_percentile(index_code, date_str, period='fs'):
     return result_df
 
 
+def plot_index_peb_percentile(index_code, start_date=None, end_date=None, method_list=None, peb='pe'):
+    if method_list is None:
+        method_list = ['ewpvo', 'mcw', 'avg', 'ew', 'median']
+    p_peb = 'pe_ttm' if peb == 'pe' else 'pb'
+    field_list = []
+    for method in method_list:
+        field_list.append('%s_y10_%s_cvpos' % (p_peb, method))
+    df = get_mul_date_peb_fields_by_index(index_code, start_date=start_date, end_date=end_date, field_list=field_list)
+    df.columns = ['正数等权', '10年市值加权', '平均数', '等权', '中位数']
+    df.plot(rot=45, grid=True)
+    plt.title('Index Percentile - %s' % utility.get_name_from_ori_code(index_code))
+    plt.show()
+
+
 def plot_index_peb_bin(index_code, start_date=None, end_date=None, method='ewpvo', peb='pe', interval=20):
     if peb == 'pe':
         field = 'pe_ttm_' + method
@@ -241,6 +255,8 @@ if __name__ == '__main__':
     # plot_index_peb_bin('000905', start_date=None, end_date=None, method='ewpvo', peb='pe', interval=30)
 
     # result = get_index_peb_percentile('000905', date_str='20201211', period='y10')
-    corr_df = cal_index_corr(index_list)
-    corr_df.min()
+
+    # corr_df = cal_index_corr(index_list)
+
+    plot_index_peb_percentile('000905', start_date='20130101', end_date='20201201')
     pass
