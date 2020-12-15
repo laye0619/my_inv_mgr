@@ -260,10 +260,10 @@ if __name__ == '__main__':
 
     # plot_index_peb_bin('000905', start_date=None, end_date=None, method='ewpvo', peb='pe', interval=30)
 
-    # result = get_index_peb_percentile('000905', date_str='20201211', period='y10')
+    result = get_index_peb_percentile('000016', date_str='20201215', period='y10')
 
     # corr_df = cal_index_corr(index_list)
 
-    plot_index_peb_percentile('000905', start_date='20130101', end_date='20201201',
-                              method_list=['ewpvo'])
+    # plot_index_peb_percentile('000016', start_date='20130101', end_date='20201201',
+    #                           method_list=['median'])
     pass
