@@ -50,7 +50,11 @@ def plot_index_peb_percentile(index_code, start_date=None, end_date=None, method
     for method in method_list:
         field_list.append('%s_y10_%s_cvpos' % (p_peb, method))
     df = get_mul_date_peb_fields_by_index(index_code, start_date=start_date, end_date=end_date, field_list=field_list)
-    df.columns = ['正数等权', '10年市值加权', '平均数', '等权', '中位数']
+    df.rename(columns={'pe_ttm_y10_ewpvo_cvpos': '正数等权',
+                       'pe_ttm_y10_mcw_cvpos': '市值加权',
+                       'pe_ttm_y10_avg_cvpos': '平均数',
+                       'pe_ttm_y10_ew_cvpos': '等权',
+                       'pe_ttm_y10_median_cvpos': '中位数'}, inplace=True)
     df.plot(rot=45, grid=True)
     plt.title('Index Percentile - %s' % utility.get_name_from_ori_code(index_code))
     plt.show()
@@ -258,5 +262,6 @@ if __name__ == '__main__':
 
     # corr_df = cal_index_corr(index_list)
 
-    plot_index_peb_percentile('000905', start_date='20130101', end_date='20201201')
+    plot_index_peb_percentile('000905', start_date='20130101', end_date='20201201',
+                              method_list=['ewpvo'])
     pass

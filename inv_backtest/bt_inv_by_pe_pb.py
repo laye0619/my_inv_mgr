@@ -1,5 +1,6 @@
 from rqalpha.apis import *
 import utility
+from index_peb.lxr_peb_analysis import get_indexes_mul_date_by_field
 from datetime import timedelta
 
 __config__ = {
@@ -8,8 +9,8 @@ __config__ = {
             "STOCK": 1000 * 10000,
         },
         "data-bundle-path": "/Users/i335644/.rqalpha/bundle",
-        "start_date": "20200901",
-        "end_date": "20201208",
+        "start_date": "20130101",
+        "end_date": "20200630",
     },
     "extra": {
         "log_level": "info",
@@ -39,11 +40,10 @@ def init(context):
     context.p_inv_by_pe_pb_AIM0 = '000022.XSHG'
     context.p_inv_by_pe_pb_AIM_LIST = context.p_index_details.loc[
         context.p_index_details['strategy'] == 'InvByPePb', 'index_code'].apply(utility.convert_code_2_rqcode)
-    context.p_inv_by_pe_pb_LOW_THRESHOLD = 0.05  # 买入估值条件阈值
-    context.p_inv_by_pe_pb_HIGH_THRESHOLD = 0.98  # 卖出估值条件阈值
-    context.p_inv_by_pe_pb_DECIDE_BY = 'PE'
-    context.p_inv_by_pe_pb_CALL_METHOD = 2  # which pe & pb calculation method
-    context.p_inv_by_pe_pb_PERIOD = 5  # 估值百分位长度 默认5年
+    context.p_inv_by_pe_pb_LOW_THRESHOLD = 0.2  # 买入估值条件阈值
+    context.p_inv_by_pe_pb_HIGH_THRESHOLD = 0.85  # 卖出估值条件阈值
+    context.p_inv_by_pe_pb_CALL_METHOD = 'pe_ttm_y10_median'
+    context.p_inv_by_pe_pb_PEB_LEVEL = __get_peb_level(context)
 
 
 def handle_bar(context, bar_dict):
@@ -51,9 +51,6 @@ def handle_bar(context, bar_dict):
     if not context.fired:
         logger.info('首次建仓...')
         inv_by_pe_pb_amount = context.config.base.accounts['STOCK'] * context.p_TOTAL_VALUE_BUFFER
-        '''
-        context.p_inv_by_pe_pb_TARGET_DICT = __gen_target_dict(context, inv_by_pe_pb_amount)  # 首次分配底仓比例
-        '''
         order_target_value(context.p_inv_by_pe_pb_AIM0, inv_by_pe_pb_amount)
         context.fired = True
 
@@ -65,60 +62,38 @@ def handle_bar(context, bar_dict):
 
 # 根据估值底仓策略
 def __trans_inv_by_pe_pb(context):
-    df_index_pe_pb_level = __get_index_pe_pb_level(context)
-    if context.p_inv_by_pe_pb_DECIDE_BY == 'PE':
-        df_index_level = df_index_pe_pb_level.drop(['pb', 'pb_high', 'pb_low'], axis=1)
-    elif context.p_inv_by_pe_pb_DECIDE_BY == 'PB':
-        df_index_level = df_index_pe_pb_level.drop(['pe', 'pe_high', 'pe_low'], axis=1)
+    index_pe_pb_level = context.p_inv_by_pe_pb_PEB_LEVEL.loc[
+        context.p_inv_by_pe_pb_PEB_LEVEL.index <= context.now.date().strftime('%Y-%m-%d')].iloc[-1]
     current_holding = __get_current_holding(context.p_inv_by_pe_pb_AIM_LIST)
-    is_small_than_low = df_index_level.iloc[:, 0] < df_index_level.iloc[:, 1]
-    is_big_than_high = df_index_level.iloc[:, 0] > df_index_level.iloc[:, 2]
-
     num_holding = len(current_holding)
     num_all = len(context.p_inv_by_pe_pb_AIM_LIST)
 
-    for i, v in is_small_than_low.iteritems():
-        if v and i not in current_holding['基金代码'].values:  # 没有持仓，买入
-            to_buy_value = get_position(context.p_inv_by_pe_pb_AIM0).market_value / (num_all - num_holding)
-            order_value(context.p_inv_by_pe_pb_AIM0, -to_buy_value)
-            order_value(i, to_buy_value)
+    to_buy = index_pe_pb_level.loc[index_pe_pb_level <= context.p_inv_by_pe_pb_LOW_THRESHOLD].index.values
+    to_sell = index_pe_pb_level.loc[index_pe_pb_level >= context.p_inv_by_pe_pb_HIGH_THRESHOLD].index.values
 
-    for i, v in is_big_than_high.iteritems():
-        if v and i in current_holding['基金代码'].values:  # 持仓，卖出
-            to_sell_value = get_position(i).market_value
-            order_value(i, -to_sell_value)
+    for sell_code in to_sell:  # 卖出
+        sell_rqcode = utility.convert_code_2_rqcode(sell_code)
+        if sell_rqcode in current_holding['基金代码'].tolist():  # 有持仓，卖出
+            to_sell_value = get_position(sell_rqcode).market_value
+            order_value(sell_rqcode, -to_sell_value)
             order_value(context.p_inv_by_pe_pb_AIM0, to_sell_value)
 
+    for buy_code in to_buy:  # 买入
+        buy_rqcode = utility.convert_code_2_rqcode(buy_code)
+        if buy_rqcode not in current_holding['基金代码'].tolist():  # 没有持仓，买入
+            to_buy_value = get_position(context.p_inv_by_pe_pb_AIM0).market_value / (num_all - num_holding)
+            order_value(context.p_inv_by_pe_pb_AIM0, -to_buy_value)
+            order_value(buy_rqcode, to_buy_value)
 
-# 计算估值底仓策略指数估值
-def __get_index_pe_pb_level(context):
-    today_date = context.now.date()
-    start_date = today_date - timedelta(context.p_inv_by_pe_pb_PERIOD * 365)
-    df_result = pd.DataFrame([], columns=['index_code', 'pe', 'pe_low', 'pe_high', 'pb', 'pb_low', 'pb_high'])
-    for code in context.p_inv_by_pe_pb_AIM_LIST:
-        file_name = ('sh' if context.p_index_details.loc[
-                                 context.p_index_details['index_code'] == utility.back_2_original_code(
-                                     code), 'index_mkt'].iloc[0] == 'SH' else 'sz') + utility.back_2_original_code(code)
-        df_pe_pb = pd.read_csv('%s/index_pe_pb/%s_pe_pb.csv' % (utility.DATA_ROOT, file_name))
-        df_pe_pb = df_pe_pb.loc[df_pe_pb['Unnamed: 0'].apply(pd.to_datetime) > pd.Timestamp(start_date)]
-        df_pe_pb = df_pe_pb.loc[df_pe_pb['Unnamed: 0'].apply(pd.to_datetime) < pd.Timestamp(today_date)]
-        pe_call_method = 'pe%s' % context.p_inv_by_pe_pb_CALL_METHOD
-        pb_call_method = 'pb%s' % context.p_inv_by_pe_pb_CALL_METHOD
-        pe = df_pe_pb[pe_call_method].iloc[-1]
-        pe_low_threshold = df_pe_pb[pe_call_method].quantile(context.p_inv_by_pe_pb_LOW_THRESHOLD)
-        pe_high_threshold = df_pe_pb[pe_call_method].quantile(context.p_inv_by_pe_pb_HIGH_THRESHOLD)
-        pb = df_pe_pb[pb_call_method].iloc[-1]
-        pb_low_threshold = df_pe_pb[pb_call_method].quantile(context.p_inv_by_pe_pb_LOW_THRESHOLD)
-        pb_high_threshold = df_pe_pb[pb_call_method].quantile(context.p_inv_by_pe_pb_HIGH_THRESHOLD)
-        df_result = df_result.append({'index_code': code,
-                                      'pe': pe,
-                                      'pe_low': pe_low_threshold,
-                                      'pe_high': pe_high_threshold,
-                                      'pb': pb,
-                                      'pb_low': pb_low_threshold,
-                                      'pb_high': pb_high_threshold}, ignore_index=True)
-    df_result.set_index(["index_code"], inplace=True)
-    return df_result
+
+# 取回指数列表中指数在回测日期范围内的给定参数的百分位
+def __get_peb_level(context):
+    field_param = context.p_inv_by_pe_pb_CALL_METHOD + '_cvpos'
+    df = get_indexes_mul_date_by_field(context.p_inv_by_pe_pb_AIM_LIST.apply(utility.back_2_original_code).tolist(),
+                                       start_date=context.config.base.start_date.strftime('%Y%m%d'),
+                                       end_date=context.config.base.end_date.strftime('%Y%m%d'),
+                                       field=field_param)
+    return df
 
 
 # 公共函数

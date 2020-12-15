@@ -10,7 +10,7 @@ __config__ = {
         },
         "data-bundle-path": "/Users/i335644/.rqalpha/bundle",
         "start_date": "20130101",
-        "end_date": "20200630",
+        "end_date": "20201208",
     },
     "extra": {
         "log_level": "info",
@@ -31,33 +31,110 @@ __config__ = {
 }
 
 
-def init(context):
-    context.fired = False
+def __set_params(context):
+    # set overall 01_params
     context.p_index_details, context.p_index_strategy = utility.read_params()
     context.p_CHECK_DATE = pd.date_range(context.config.base.start_date, context.config.base.end_date, freq='W-THU')
-    context.p_TOTAL_VALUE_BUFFER = 0.99  # 留1%的钱给手续费倒腾
+    context.p_TOTAL_VALUE_BUFFER = 0.99  # 留XX的钱给手续费倒腾
+
+    # set tendency28 01_params
+    context.p_t28_AIM1 = utility.convert_code_2_rqcode(
+        context.p_index_details.loc[context.p_index_details['strategy'] == 'Tendency28', 'index_code'].iloc[0])
+    context.p_t28_AIM2 = utility.convert_code_2_rqcode(
+        context.p_index_details.loc[context.p_index_details['strategy'] == 'Tendency28', 'index_code'].iloc[1])
+    context.p_t28_AIM0 = '000012.XSHG'
+    context.p_t28_UP_THRESHOLD = 0.5
+    context.p_t28_DIFF_THRESHOLD = 1.0
+    context.p_t28_PREV = 20
+    context.p_t28_STATUS = 0  # having status
+    context.p_t28_POSITION_RATIO = float(
+        context.p_index_strategy.loc[context.p_index_strategy['strategy'] == 'Tendency28', 'position_level'].iloc[0])
+
     # set inv by pe pb 01_params
     context.p_inv_by_pe_pb_AIM0 = '000022.XSHG'
     context.p_inv_by_pe_pb_AIM_LIST = context.p_index_details.loc[
         context.p_index_details['strategy'] == 'InvByPePb', 'index_code'].apply(utility.convert_code_2_rqcode)
     context.p_inv_by_pe_pb_LOW_THRESHOLD = 0.2  # 买入估值条件阈值
     context.p_inv_by_pe_pb_HIGH_THRESHOLD = 0.85  # 卖出估值条件阈值
-    context.p_inv_by_pe_pb_CALL_METHOD = 'pe_ttm_y10_ewpvo'
+    context.p_inv_by_pe_pb_CALL_METHOD = 'pe_ttm_y10_median'
     context.p_inv_by_pe_pb_PEB_LEVEL = __get_peb_level(context)
+    context.p_inv_by_pe_pb_POSITION_RATIO = float(
+        context.p_index_strategy.loc[context.p_index_strategy['strategy'] == 'InvByPePb', 'position_level'].iloc[0])
+
+
+def init(context):
+    logger.info('初始化参数设置...')
+    __set_params(context)  # 设置参数
+    context.fired = False
 
 
 def handle_bar(context, bar_dict):
     # 首次建仓
     if not context.fired:
         logger.info('首次建仓...')
-        inv_by_pe_pb_amount = context.config.base.accounts['STOCK'] * context.p_TOTAL_VALUE_BUFFER
+        inv_by_pe_pb_amount = context.config.base.accounts[
+                                  'STOCK'] * context.p_TOTAL_VALUE_BUFFER * context.p_inv_by_pe_pb_POSITION_RATIO
         order_target_value(context.p_inv_by_pe_pb_AIM0, inv_by_pe_pb_amount)
+        t28_amount = context.config.base.accounts['STOCK'] * context.p_TOTAL_VALUE_BUFFER * context.p_t28_POSITION_RATIO
+        order_target_value(context.p_t28_AIM0, t28_amount)
         context.fired = True
 
     if pd.to_datetime(context.now.date()) not in context.p_CHECK_DATE:
         return
-    logger.info('每周执行所有策略 - 底仓估值策略...')
+    logger.info('每周执行组合策略')
     __trans_inv_by_pe_pb(context)
+    __trans_tendency28(context)
+
+
+# 28轮动策略
+def __trans_tendency28(context):
+    df1 = pd.DataFrame(history_bars(context.p_t28_AIM1, bar_count=50, frequency='1d', fields=['datetime', 'close']))
+    df1['datetime'] = pd.to_datetime(df1['datetime'], format="%Y%m%d%H%M%S")
+    up1 = (
+            (df1.iloc[-1].close - df1.iloc[-1 - context.p_t28_PREV].close)
+            / df1.iloc[-1 - context.p_t28_PREV].close
+            * 100
+    )
+    df2 = pd.DataFrame(history_bars(context.p_t28_AIM2, bar_count=50, frequency='1d', fields=['datetime', 'close']))
+    df2['datetime'] = pd.to_datetime(df2['datetime'], format="%Y%m%d%H%M%S")
+    up2 = (
+            (df2.iloc[-1].close - df2.iloc[-1 - context.p_t28_PREV].close)
+            / df2.iloc[-1 - context.p_t28_PREV].close
+            * 100
+    )
+    if up1 < context.p_t28_UP_THRESHOLD and up2 < context.p_t28_UP_THRESHOLD:
+        if context.p_t28_STATUS == 1:
+            value = get_position(context.p_t28_AIM1, POSITION_DIRECTION.LONG).market_value
+            order_target_value(context.p_t28_AIM1, 0)
+            context.p_t28_STATUS = 0
+            order_target_value(context.p_t28_AIM0, value)
+        elif context.p_t28_STATUS == 2:
+            value = get_position(context.p_t28_AIM2, POSITION_DIRECTION.LONG).market_value
+            order_target_value(context.p_t28_AIM2, 0)
+            context.p_t28_STATUS = 0
+            order_target_value(context.p_t28_AIM0, value)
+    elif up1 > context.p_t28_UP_THRESHOLD and up1 > up2:
+        if context.p_t28_STATUS == 0:
+            value = get_position(context.p_t28_AIM0, POSITION_DIRECTION.LONG).market_value
+            order_target_value(context.p_t28_AIM0, 0)
+            context.p_t28_STATUS = 1
+            order_target_value(context.p_t28_AIM1, value)
+        elif context.p_t28_STATUS == 2 and up1 - up2 > context.p_t28_DIFF_THRESHOLD:
+            value = get_position(context.p_t28_AIM2, POSITION_DIRECTION.LONG).market_value
+            order_target_value(context.p_t28_AIM2, 0)
+            context.p_t28_STATUS = 1
+            order_target_value(context.p_t28_AIM1, value)
+    elif up2 > context.p_t28_UP_THRESHOLD and up2 > up1:
+        if context.p_t28_STATUS == 0:
+            value = get_position(context.p_t28_AIM0, POSITION_DIRECTION.LONG).market_value
+            order_target_value(context.p_t28_AIM0, 0)
+            context.p_t28_STATUS = 2
+            order_target_value(context.p_t28_AIM2, value)
+        elif context.p_t28_STATUS == 1 and up2 - up1 > context.p_t28_DIFF_THRESHOLD:
+            value = get_position(context.p_t28_AIM1, POSITION_DIRECTION.LONG).market_value
+            order_target_value(context.p_t28_AIM1, 0)
+            context.p_t28_STATUS = 2
+            order_target_value(context.p_t28_AIM2, value)
 
 
 # 根据估值底仓策略

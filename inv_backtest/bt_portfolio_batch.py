@@ -43,7 +43,7 @@ while True:
         print('Processing date: %s...' % start_date.date())
         __config__['base']['start_date'] = start_date.strftime('%Y%m%d')
         __config__['base']['end_date'] = end_date.strftime('%Y%m%d')
-        portfolio_result = run_file('./bt_portfolio.py', __config__)
+        portfolio_result = run_file('./bt_portfolio_t28_peb.py', __config__)
         df_result = df_result.append(portfolio_result['sys_analyser']['summary'], ignore_index=True)
     start_date = start_date + timedelta(1)
 

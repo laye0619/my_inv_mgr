@@ -45,7 +45,9 @@ def t28_signal():
 def inv_by_pe_pb_signal():
     holding_list = df_params.loc[df_params['is_holding'] == 'Y', 'index_code'].tolist()
     yesterday = datetime.date.today() - datetime.timedelta(1)
-    field_param = 'pe_ttm_y10_ewpvo_cvpos'
+    p_inv_by_pe_pb_LOW_THRESHOLD = 0.2  # 买入估值条件阈值
+    p_inv_by_pe_pb_HIGH_THRESHOLD = 0.85  # 卖出估值条件阈值
+    field_param = 'pe_ttm_y10_median_cvpos'
     df = peb.get_indexes_mul_date_by_field(holding_list,
                                            start_date=(yesterday - datetime.timedelta(20)).strftime('%Y%m%d'),
                                            end_date=yesterday.strftime('%Y%m%d'),
