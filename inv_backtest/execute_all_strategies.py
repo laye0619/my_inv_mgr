@@ -32,7 +32,7 @@ __config__ = {
 t28_result = run_file('./bt_t28.py', __config__)
 t_ind_result = run_file('bt_t_ind.py', __config__)
 inv_by_pe_pb_result = run_file('./bt_inv_by_pe_pb.py', __config__)
-portfolio_result = run_file('./bt_portfolio.py', __config__)
+portfolio_result = run_file('bt_portfolio_all.py', __config__)
 portfolio_position_ctl_result = run_file('./bt_portfolio_position_ctl.py', __config__)
 
 df_result = pd.DataFrame()

@@ -143,6 +143,7 @@ def update_data(index_list, end_date=None):
                     else:
                         new_dict[l1_k] = date_item[l1_k]
                 result_df = result_df.append(new_dict, ignore_index=True)
+            result_df['date'] = result_df['date'].apply(lambda x: x[:10])
             result_df = result_df.sort_values(by=['date'], ignore_index=True)
             result_df.to_csv('%s/index_peb/%s_peb.csv' % (utility.DATA_ROOT, utility.convert_code_2_csvfilename(code)),
                              index=False)
