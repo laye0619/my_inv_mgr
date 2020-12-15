@@ -166,7 +166,7 @@ def get_indexes_peb_fields_by_date(index_list, date_str, field_list=None):
         df = __read_peb_file(index_code, field_list)
         df['date'] = pd.to_datetime(df['date'])
 
-        df = df.loc[df['date'] <= pd.to_datetime(date_str, utc=True)]
+        df = df.loc[df['date'] <= pd.to_datetime(date_str)]
         if len(df) > 0:
             seri = df.iloc[-1]
             seri.name = index_code
@@ -179,9 +179,9 @@ def get_mul_date_peb_fields_by_index(index_code, start_date=None, end_date=None,
     df = __read_peb_file(index_code, field_list)
     df['date'] = pd.to_datetime(df['date'])
     if start_date is not None:
-        df = df.loc[df['date'] >= pd.to_datetime(start_date, utc=True)]
+        df = df.loc[df['date'] >= pd.to_datetime(start_date)]
     if end_date is not None:
-        df = df.loc[df['date'] <= pd.to_datetime(end_date, utc=True)]
+        df = df.loc[df['date'] <= pd.to_datetime(end_date)]
     df.index = df['date']
     del df['date']
     return df
@@ -197,9 +197,9 @@ def get_indexes_mul_date_by_field(index_list, field, start_date=None, end_date=N
         df = __read_peb_file(index_code, [field])
         df['date'] = pd.to_datetime(df['date'])
         if start_date is not None:
-            df = df.loc[df['date'] >= pd.to_datetime(start_date, utc=True)]
+            df = df.loc[df['date'] >= pd.to_datetime(start_date)]
         if end_date is not None:
-            df = df.loc[df['date'] <= pd.to_datetime(end_date, utc=True)]
+            df = df.loc[df['date'] <= pd.to_datetime(end_date)]
         df.index = df['date']
         if len(df) > 0:
             result_df[index_code] = df[field]
@@ -253,6 +253,8 @@ if __name__ == '__main__':
     #                                    end_date=None,
     #                                    method='median',
     #                                    peb='pe')
+
+    # plot_single_index_peb_with_mul_method('000905')
 
     # plot_index_peb_hist('000905', start_date=None, end_date=None, method='mcw', peb='pb')
 

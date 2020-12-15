@@ -63,7 +63,7 @@ def handle_bar(context, bar_dict):
 # 根据估值底仓策略
 def __trans_inv_by_pe_pb(context):
     index_pe_pb_level = context.p_inv_by_pe_pb_PEB_LEVEL.loc[
-        context.p_inv_by_pe_pb_PEB_LEVEL.index <= context.now.date().strftime('%Y-%m-%d')].iloc[-1]
+        context.p_inv_by_pe_pb_PEB_LEVEL.index < context.now.date().strftime('%Y-%m-%d')].iloc[-1]
     current_holding = __get_current_holding(context.p_inv_by_pe_pb_AIM_LIST)
     num_holding = len(current_holding)
     num_all = len(context.p_inv_by_pe_pb_AIM_LIST)
@@ -89,8 +89,9 @@ def __trans_inv_by_pe_pb(context):
 # 取回指数列表中指数在回测日期范围内的给定参数的百分位
 def __get_peb_level(context):
     field_param = context.p_inv_by_pe_pb_CALL_METHOD + '_cvpos'
+    start_date = context.config.base.start_date - timedelta(5)
     df = get_indexes_mul_date_by_field(context.p_inv_by_pe_pb_AIM_LIST.apply(utility.back_2_original_code).tolist(),
-                                       start_date=context.config.base.start_date.strftime('%Y%m%d'),
+                                       start_date=start_date.strftime('%Y%m%d'),
                                        end_date=context.config.base.end_date.strftime('%Y%m%d'),
                                        field=field_param)
     return df
