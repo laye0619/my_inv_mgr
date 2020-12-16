@@ -47,4 +47,4 @@ while True:
         df_result = df_result.append(portfolio_result['sys_analyser']['summary'], ignore_index=True)
     start_date = start_date + timedelta(1)
 
-df_result.to_excel('%s/backtest/bt_portfolio_batch_test_result_onlytwo.xlsx' % utility.REPORT_ROOT)
+df_result.to_excel('%s/backtest/bt_portfolio_t28_peb_batch_test_result.xlsx' % utility.REPORT_ROOT)
