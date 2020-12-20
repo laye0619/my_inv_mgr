@@ -53,8 +53,10 @@ def inv_by_pe_pb_signal():
                                            end_date=yesterday.strftime('%Y%m%d'),
                                            field=field_param).iloc[-1]
     df.index = [utility.get_name_from_ori_code(x) for x in df.index.values]
+
     print(df)
 
 
 if __name__ == '__main__':
+    t28_signal()
     inv_by_pe_pb_signal()

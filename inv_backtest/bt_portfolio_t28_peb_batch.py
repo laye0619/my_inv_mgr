@@ -31,7 +31,7 @@ __config__ = {
 }
 
 start_date = pd.to_datetime('2011-01-01')
-each_period_years = 3
+each_period_years = 5
 df_result = pd.DataFrame()
 check_date = pd.date_range(start_date, datetime.now().date(), freq='W-THU')
 
