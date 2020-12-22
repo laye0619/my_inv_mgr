@@ -33,7 +33,7 @@ __config__ = {
 
 def init(context):
     context.fired = False
-    context.p_index_details, context.p_index_strategy = utility.read_params()
+    context.p_index_details, context.p_index_strategy = utility.read_params(file='bt_params')
     context.p_CHECK_DATE = pd.date_range(context.config.base.start_date, context.config.base.end_date, freq='W-THU')
     context.p_TOTAL_VALUE_BUFFER = 0.99  # 留1%的钱给手续费倒腾
     # set inv by pe pb 01_params

@@ -6,10 +6,9 @@ import pandas as pd
 
 
 def get_my_inv_analysis(date=yesterdayobj()):
-    ex_record_df = pd.read_excel('%s/Inv_Asset_Analysis.xlsx' % utility.PARAMS_ROOT, sheet_name='E_TransRecord')
+    _, ex_record_df, in_record_df = utility.read_params(file='Inv_Asset_Analysis')
     ex_record_df = ex_record_df[ex_record_df.date != 'tobedeleted']
 
-    in_record_df = pd.read_excel('%s/Inv_Asset_Analysis.xlsx' % utility.PARAMS_ROOT, sheet_name='I_TransRecord')
     ex_record = xa.record(path=ex_record_df, fund_property=True)
     in_record = xa.irecord(path=in_record_df)
 
@@ -20,8 +19,7 @@ def generate_my_inv_month_end_closing(df_analysis, period, analysis_date):
     df_month_end_closing_template = df_analysis[df_analysis.基金名称 != '总计']
     df_month_end_closing_template = df_month_end_closing_template[['基金名称', '基金代码', '基金现值']]
     df_month_end_closing_template.rename(columns={'基金名称': '项目', '基金代码': '代码', '基金现值': '现值'}, inplace=True)
-    master_data = pd.read_excel('%s/Inv_Asset_Analysis.xlsx' % utility.PARAMS_ROOT, sheet_name='MasterData',
-                                dtype='str')
+    master_data, _, _ = utility.read_params(file='Inv_Asset_Analysis')
     non_fund_list = master_data.loc[master_data['code'].isna(), 'name']
     for name in non_fund_list:
         df_month_end_closing_template = df_month_end_closing_template.append({'项目': name}, ignore_index=True)

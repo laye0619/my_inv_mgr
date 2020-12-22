@@ -5,7 +5,7 @@ from index_peb import lxr_peb_analysis as peb
 
 pro = ts.pro_api('602e5ad960d66ab8b1f3c13b4fd746f5323ff808b0820768b02c6da3')
 
-df_params, _ = utility.read_params()
+df_params, _ = utility.read_params(file='bt_params')
 
 
 def t28_signal():

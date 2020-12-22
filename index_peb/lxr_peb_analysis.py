@@ -245,7 +245,7 @@ def __ffloat(data_in):
 
 
 if __name__ == '__main__':
-    index_list, _ = utility.read_params()
+    index_list, _ = utility.read_params(file='bt_params')
     index_list = index_list['index_code'].drop_duplicates().tolist()
 
     # plot_indexes_peb_with_given_method(index_list=index_list,

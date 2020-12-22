@@ -150,7 +150,7 @@ def update_data(index_list, end_date=None):
 
 
 if __name__ == '__main__':
-    index_codes, _ = utility.read_params()
+    index_codes, _ = utility.read_params(file='bt_params')
     index_codes = index_codes['index_code'].drop_duplicates()
     index_codes = index_codes.replace('000001', '1000004')
     index_codes = index_codes.replace('000985', '1000002')
