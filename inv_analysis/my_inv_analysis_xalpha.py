@@ -5,7 +5,7 @@ import utility as utility
 import pandas as pd
 
 
-def get_my_inv_analysis(date=yesterdayobj()):
+def get_my_inv_analysis():
     _, ex_record_df, in_record_df = utility.read_params(file='Inv_Asset_Analysis')
     ex_record_df = ex_record_df[ex_record_df.date != 'tobedeleted']
 
@@ -41,8 +41,8 @@ def generate_my_inv_month_end_closing(df_analysis, period, analysis_date):
 
 if __name__ == '__main__':
     date = yesterdayobj()
-    sys_open = get_my_inv_analysis(date=date)
-    df_analysis = sys_open.combsummary().sort_values(by="基金现值", ascending=False)
+    sys_open = get_my_inv_analysis()
+    df_analysis = sys_open.combsummary(date=date).sort_values(by="基金现值", ascending=False)
     df_month_end_closing_template = generate_my_inv_month_end_closing(df_analysis, period='2020/12',
                                                                       analysis_date=date.strftime('%Y/%m/%d'))
     writer = pd.ExcelWriter(
