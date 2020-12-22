@@ -10,16 +10,12 @@ import utility
 # print(ut.DATA_ROOT)
 # print(ut.REPORT_ROOT)
 # print(ut.PARAMS_ROOT)
-#
+
 pro = ts.pro_api('602e5ad960d66ab8b1f3c13b4fd746f5323ff808b0820768b02c6da3')
 
-# df = pd.DataFrame()
-# seri = pd.Series(['aa', 'aaa', 'aaaa'])
-# df['a'] = seri
-# pass
+# f = pro.daily(ts_code='512980.SH', start_date='20190301', end_date='20190331')
+f = ts.pro_bar(ts_code='512980.SH', api=pro, asset='FD', adj='qfq', start_date='20190320', end_date='20190331')
 
-
-df = pro.index_daily(ts_code='000905.SH')
-df = df['trade_date', 'close', '']
+# f = xa.fundinfo('159915')
 
 pass
