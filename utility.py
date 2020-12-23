@@ -14,11 +14,10 @@ def read_params(file):
         df_params_details = pd.read_excel('%s/%s.xlsx' % (PARAMS_ROOT, file), sheet_name='details', dtype='str')
         df_params_strategy = pd.read_excel('%s/%s.xlsx' % (PARAMS_ROOT, file), sheet_name='strategy', dtype='str')
         return df_params_details, df_params_strategy
-    if file == 'Inv_Asset_Analysis':
-        master_data = pd.read_excel('%s/Inv_Asset_Analysis.xlsx' % PARAMS_ROOT, sheet_name='MasterData',
-                                    dtype='str')
-        ex_record_df = pd.read_excel('%s/Inv_Asset_Analysis.xlsx' % PARAMS_ROOT, sheet_name='E_TransRecord')
-        in_record_df = pd.read_excel('%s/Inv_Asset_Analysis.xlsx' % PARAMS_ROOT, sheet_name='I_TransRecord')
+    if file == 'Inv_Asset_Record':
+        master_data = pd.read_excel('%s/%s.xlsx' % (PARAMS_ROOT, file), sheet_name='MasterData', dtype='str')
+        ex_record_df = pd.read_excel('%s/%s.xlsx' % (PARAMS_ROOT, file), sheet_name='E_TransRecord')
+        in_record_df = pd.read_excel('%s/%s.xlsx' % (PARAMS_ROOT, file), sheet_name='I_TransRecord')
         return master_data, ex_record_df, in_record_df
 
 
