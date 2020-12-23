@@ -11,11 +11,15 @@ import utility
 # print(ut.REPORT_ROOT)
 # print(ut.PARAMS_ROOT)
 
-pro = ts.pro_api('602e5ad960d66ab8b1f3c13b4fd746f5323ff808b0820768b02c6da3')
+# pro = ts.pro_api('602e5ad960d66ab8b1f3c13b4fd746f5323ff808b0820768b02c6da3')
 
 # f = pro.daily(ts_code='512980.SH', start_date='20190301', end_date='20190331')
-f = ts.pro_bar(ts_code='512980.SH', api=pro, asset='FD', adj='qfq', start_date='20190320', end_date='20190331')
+# f = ts.pro_bar(ts_code='512980.SH', api=pro, asset='FD', adj='qfq', start_date='20190320', end_date='20190331')
 
 # f = xa.fundinfo('159915')
+
+str_num = '22,324.23'
+
+print(type(str))
 
 pass

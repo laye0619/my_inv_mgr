@@ -59,11 +59,12 @@ def save_analysis_and_month_end_closing_template(period, date=None):
     df_analysis = sys_open.combsummary(date=date).sort_values(by="基金现值", ascending=False)
     df_month_end_closing_template = generate_my_inv_month_end_closing(df_analysis, period=period,
                                                                       analysis_date=date.strftime('%Y/%m/%d'))
+    df_month_end_closing_template = utility.convert_float_for_dataframe_columns(df_month_end_closing_template, ['现值'])
     writer = pd.ExcelWriter(
         "%s/my_inv_analysis/month_end_closing_%s.xlsx" % (utility.REPORT_ROOT, date.strftime('%Y%m%d')),
         engine='openpyxl')
     df_month_end_closing_template.to_excel(writer, "month_end_closing", index=0)
-    df_analysis.to_excel(writer, "analysis", index=0)
+    df_analysis.to_excel(writer, "analysis", index=0, float_format="%.2f")
     writer.save()
 
 
@@ -71,7 +72,7 @@ def save_analysis_and_month_end_closing_template(period, date=None):
 def update_weekly_inv_report():
     # 取出现有文件
     current_df = pd.read_excel('%s/my_inv_analysis/weekly_inv_report.xlsx' % utility.REPORT_ROOT, sheet_name='data')
-    last_date = pd.to_datetime(current_df['日期'].iloc[-1], format='%Y%m%d') + timedelta(1)
+    last_date = pd.to_datetime(current_df['日期'].iloc[-1], format='%Y/%m/%d') + timedelta(1)
 
     date_list = pd.date_range(start=last_date, end=yesterdayobj(), freq='W-FRI')
     for date in date_list:
@@ -81,12 +82,10 @@ def update_weekly_inv_report():
         df_analysis = df_analysis[df_analysis.基金名称 != '总计']
         df_analysis['日期'] = date.strftime('%Y/%m/%d')
         current_df = pd.concat([current_df, df_analysis])
-    writer = pd.ExcelWriter('%s/my_inv_analysis/weekly_inv_report.xlsx' % utility.REPORT_ROOT,
-                            engine='openpyxl')
-    current_df.to_excel(writer, "data", index=0)
-    writer.save()
+    current_df.to_excel('%s/my_inv_analysis/weekly_inv_report.xlsx' % utility.REPORT_ROOT, sheet_name='data', index=0,
+                        float_format="%.2f")
 
 
 if __name__ == '__main__':
-    save_analysis_and_month_end_closing_template(period='2020/12')
+    # save_analysis_and_month_end_closing_template(period='2020/12')
     update_weekly_inv_report()

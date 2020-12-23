@@ -21,6 +21,23 @@ def read_params(file):
         return master_data, ex_record_df, in_record_df
 
 
+# 转换数字为：保留n位小数；是否使用千分位
+def convert_float_format(target, number=2, thousands=True):
+    if isinstance(target, str):
+        target = float(target.replace(',', ''))
+    first_step = round(target, number)
+    second_step = format(first_step, ',') if thousands else first_step
+    return second_step
+
+
+# 给定的dataframe中，指定[列]中的所有数字转换convert_float_format
+def convert_float_for_dataframe_columns(target_df, columns, number=2, thousands=True):
+    for column in columns:
+        target_df[column] = target_df[column].apply(convert_float_format, args=(number, thousands,))
+    return target_df
+
+
+# 以下是code转换，参照bt_params
 def convert_code_2_rqcode(code):
     details, _ = read_params(file='bt_params')
     code_mkt = details.loc[details['index_code'] == code, 'index_mkt'].iloc[0]
@@ -64,5 +81,8 @@ def get_cn_desc_from_index_peb_field(field_name):
 
 
 if __name__ == '__main__':
-    desc = get_cn_desc_from_index_peb_field('pb_fs_avg_cvpos')
+    # desc = convert_float_format(1234.5678)
+    df = pd.DataFrame([[1111.112, 2222.222, 3333.333, 4444.444], [44444.4444, 33333.333, 22222.222, 11111.111]],
+                      columns=['a', 'b', 'c', 'd'])
+    result = convert_float_for_dataframe_columns(df, ['b', 'd'], number=3)
     pass
