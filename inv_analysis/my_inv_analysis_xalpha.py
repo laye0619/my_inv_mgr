@@ -87,5 +87,5 @@ def update_weekly_inv_report():
 
 
 if __name__ == '__main__':
-    # save_analysis_and_month_end_closing_template(period='2020/12')
+    save_analysis_and_month_end_closing_template(period='2020/12')
     update_weekly_inv_report()
