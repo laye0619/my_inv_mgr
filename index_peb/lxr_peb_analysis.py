@@ -2,15 +2,103 @@ from datetime import date, timedelta
 
 import pandas as pd
 import utility
-import matplotlib.pyplot as plt
-import matplotlib as mpl
+# import matplotlib.pyplot as plt
+# import matplotlib as mpl
 import tushare as ts
 import xalpha as xa
 import datetime
 
-mpl.use('TkAgg')
-mpl.rcParams[u'font.sans-serif'] = ['SimHei']
-mpl.rcParams['axes.unicode_minus'] = False
+# mpl.use('TkAgg')
+# mpl.rcParams[u'font.sans-serif'] = ['SimHei']
+# mpl.rcParams['axes.unicode_minus'] = False
+
+
+def get_index_peb_percentile_history(index_code, start_date=None, end_date=None, method_list=None, peb='pe'):
+    if method_list is None:
+        method_list = ['ewpvo', 'mcw', 'avg', 'ew', 'median']
+    p_peb = 'pe_ttm' if peb == 'pe' else 'pb'
+    field_list = []
+    for method in method_list:
+        field_list.append('%s_y10_%s_cvpos' % (p_peb, method))
+    df = get_mul_date_peb_fields_by_index(index_code, start_date=start_date, end_date=end_date, field_list=field_list)
+    df.rename(columns={'pe_ttm_y10_ewpvo_cvpos': '正数等权',
+                       'pe_ttm_y10_mcw_cvpos': '市值加权',
+                       'pe_ttm_y10_avg_cvpos': '平均数',
+                       'pe_ttm_y10_ew_cvpos': '等权',
+                       'pe_ttm_y10_median_cvpos': '中位数'}, inplace=True)
+    return df
+
+
+def get_index_peb_bin(index_code, start_date=None, end_date=None, method='ewpvo', peb='pe', interval=20):
+    if peb == 'pe':
+        field = 'pe_ttm_' + method
+    elif peb == 'pb':
+        field = 'pb_' + method
+    df = get_indexes_mul_date_by_field([index_code], start_date=start_date, end_date=end_date, field=field)
+
+    df_desc = df.describe()
+    bins = []
+    peb_max = df_desc.loc['max', index_code]
+    peb_min = df_desc.loc['min', index_code]
+    sub_max_min = peb_max - peb_min
+    for i in range(interval):
+        increment = i * (1 / interval)
+        bins.append(__ffloat(sub_max_min * increment + peb_min))
+    bins.append(peb_max)
+    score_cat = pd.cut(df[index_code], bins)
+    peb_bin = pd.value_counts(score_cat)
+    peb_bin = peb_bin.sort_index()
+    return peb_bin
+
+
+def plot_index_peb_hist(index_code, start_date=None, end_date=None, method='ewpvo', peb='pe'):
+    '''
+    单个指数的hist图 - 指定peb的计算方法
+    :param index_code:
+    :param start_date:
+    :param end_date:
+    :param method:
+    :param peb:
+    :return:
+    '''
+    if peb == 'pe':
+        field = 'pe_ttm_' + method
+    elif peb == 'pb':
+        field = 'pb_' + method
+    df = get_indexes_mul_date_by_field([index_code], start_date=start_date, end_date=end_date, field=field)
+
+    df.hist(column=df.columns[0], bins=round(df.count()[0] / 8))
+    plt.title('%s Histogram - %s - Today is %.2f' % (
+        utility.get_name_from_ori_code(df.columns[0]), utility.get_cn_desc_from_index_peb_field(field), df.iloc[-1, 0]))
+    plt.show()
+    pass
+
+
+def get_indexes_peb_with_given_method(index_list, start_date=None, end_date=None, method='ewpvo', peb='pe'):
+    if peb == 'pe':
+        field = 'pe_ttm_' + method
+    elif peb == 'pb':
+        field = 'pb_' + method
+    df = get_indexes_mul_date_by_field(index_list, start_date=start_date, end_date=end_date, field=field)
+    for col_name in df.columns:
+        df.rename(columns={col_name: utility.get_name_from_ori_code(col_name)}, inplace=True)
+    return df
+
+
+def get_single_index_peb_with_mul_method(index_code, start_date=None, end_date=None, method=None, peb='pe'):
+    if method is None:
+        method = ['ew', 'ewpvo', 'mcw', 'median', 'avg']
+    if peb == 'pe':
+        field_list = ['pe_ttm_' + field for field in method]
+    elif peb == 'pb':
+        field_list = ['pb_' + field for field in method]
+    df = get_mul_date_peb_fields_by_index(start_date=start_date, end_date=end_date, index_code=index_code,
+                                          field_list=field_list)
+
+    for col_name in df.columns:
+        df.rename(columns={col_name: utility.get_cn_desc_from_index_peb_field(col_name)}, inplace=True)
+
+    return df
 
 
 def get_index_peb_percentile(index_code, date_str, period='fs'):
@@ -40,124 +128,6 @@ def get_index_peb_percentile(index_code, date_str, period='fs'):
     result_df.columns = ['平均值', '当前值', '当前分位点', '最大正值', '最大值', '最小值', '20%分位点', '50%分位点', '80%分位点']
     result_df.index = ['PE平均值法', 'PE正数等权', 'PE等权', 'PE中位数', 'PE加权法', 'PB平均值法', 'PB正数等权', 'PB等权', 'PB中位数', 'PB加权法']
     return result_df
-
-
-def plot_index_peb_percentile(index_code, start_date=None, end_date=None, method_list=None, peb='pe'):
-    if method_list is None:
-        method_list = ['ewpvo', 'mcw', 'avg', 'ew', 'median']
-    p_peb = 'pe_ttm' if peb == 'pe' else 'pb'
-    field_list = []
-    for method in method_list:
-        field_list.append('%s_y10_%s_cvpos' % (p_peb, method))
-    df = get_mul_date_peb_fields_by_index(index_code, start_date=start_date, end_date=end_date, field_list=field_list)
-    df.rename(columns={'pe_ttm_y10_ewpvo_cvpos': '正数等权',
-                       'pe_ttm_y10_mcw_cvpos': '市值加权',
-                       'pe_ttm_y10_avg_cvpos': '平均数',
-                       'pe_ttm_y10_ew_cvpos': '等权',
-                       'pe_ttm_y10_median_cvpos': '中位数'}, inplace=True)
-    df.plot(rot=45, grid=True)
-    plt.title('Index Percentile - %s' % utility.get_name_from_ori_code(index_code))
-    plt.show()
-
-
-def plot_index_peb_bin(index_code, start_date=None, end_date=None, method='ewpvo', peb='pe', interval=20):
-    if peb == 'pe':
-        field = 'pe_ttm_' + method
-    elif peb == 'pb':
-        field = 'pb_' + method
-    df = get_indexes_mul_date_by_field([index_code], start_date=start_date, end_date=end_date, field=field)
-
-    df_desc = df.describe()
-    bins = []
-    pe_max = df_desc.loc['max', index_code]
-    pe_min = df_desc.loc['min', index_code]
-    sub_max_min = pe_max - pe_min
-    for i in range(interval):
-        increment = i * (1 / interval)
-        bins.append(__ffloat(sub_max_min * increment + pe_min))
-    bins.append(pe_max)
-    score_cat = pd.cut(df[index_code], bins)
-    pe_bin = pd.value_counts(score_cat)
-    pe_bin = pe_bin.sort_index()
-    pe_bin.plot(kind='bar', rot=75)
-    plt.title('%s BIns - %s - Today is %.2f' % (
-        utility.get_name_from_ori_code(df.columns[0]), utility.get_cn_desc_from_index_peb_field(field), df.iloc[-1, 0]))
-    plt.show()
-    pass
-
-
-def plot_index_peb_hist(index_code, start_date=None, end_date=None, method='ewpvo', peb='pe'):
-    '''
-    单个指数的hist图 - 指定peb的计算方法
-    :param index_code:
-    :param start_date:
-    :param end_date:
-    :param method:
-    :param peb:
-    :return:
-    '''
-    if peb == 'pe':
-        field = 'pe_ttm_' + method
-    elif peb == 'pb':
-        field = 'pb_' + method
-    df = get_indexes_mul_date_by_field([index_code], start_date=start_date, end_date=end_date, field=field)
-
-    df.hist(column=df.columns[0], bins=round(df.count()[0] / 8))
-    plt.title('%s Histogram - %s - Today is %.2f' % (
-        utility.get_name_from_ori_code(df.columns[0]), utility.get_cn_desc_from_index_peb_field(field), df.iloc[-1, 0]))
-    plt.show()
-    pass
-
-
-def plot_indexes_peb_with_given_method(index_list, start_date=None, end_date=None, method='ewpvo', peb='pe'):
-    '''
-    不同指数的同一种peb方法作图比较
-    :param index_list:
-    :param start_date:
-    :param end_date:
-    :param method:
-    :param peb:
-    :return:
-    '''
-    if peb == 'pe':
-        field = 'pe_ttm_' + method
-    elif peb == 'pb':
-        field = 'pb_' + method
-    df = get_indexes_mul_date_by_field(index_list, start_date=start_date, end_date=end_date, field=field)
-    for col_name in df.columns:
-        df.rename(columns={col_name: utility.get_name_from_ori_code(col_name)}, inplace=True)
-
-    df.plot(rot=45, grid=True)
-    plt.title('Index %s' % utility.get_cn_desc_from_index_peb_field(field))
-    plt.show()
-
-
-def plot_single_index_peb_with_mul_method(index_code, start_date=None, end_date=None, method=None, peb='pe'):
-    '''
-    给定的指数不同的peb方法作图比较
-    :param end_date:
-    :param start_date:
-    :param peb:
-    :param index_code: 
-    :param date: 
-    :param method: 
-    :return: 
-    '''
-    if method is None:
-        method = ['ew', 'ewpvo', 'mcw', 'median', 'avg']
-    if peb == 'pe':
-        field_list = ['pe_ttm_' + field for field in method]
-    elif peb == 'pb':
-        field_list = ['pb_' + field for field in method]
-    df = get_mul_date_peb_fields_by_index(start_date=start_date, end_date=end_date, index_code=index_code,
-                                          field_list=field_list)
-
-    for col_name in df.columns:
-        df.rename(columns={col_name: utility.get_cn_desc_from_index_peb_field(col_name)}, inplace=True)
-
-    df.plot(rot=45, grid=True)
-    plt.title('Index %s - %s ' % (index_code, utility.get_name_from_ori_code(index_code)))
-    plt.show()
 
 
 def get_indexes_peb_fields_by_date(index_list, date_str, field_list=None):
@@ -206,19 +176,6 @@ def get_indexes_mul_date_by_field(index_list, field, start_date=None, end_date=N
     return result_df.dropna(how='all')
 
 
-def __read_peb_file(index_code, field_list=None):
-    file_path = '%s/index_peb/%s_peb.csv' % (
-        utility.DATA_ROOT, utility.convert_code_2_csvfilename(index_code))
-    df = pd.read_csv(file_path)
-
-    if field_list is None:
-        return df
-    else:
-        if 'date' not in field_list:
-            field_list.append('date')
-        return df[field_list]
-
-
 def cal_index_corr(index_list, period=10):
     end_date = date.today() - timedelta(1)
     start_date = end_date - timedelta(period * 365)
@@ -238,6 +195,19 @@ def cal_index_corr(index_list, period=10):
     result_df.columns = [utility.get_name_from_ori_code(c) for c in result_df.columns.values]
     result_df = result_df.corr()
     return result_df
+
+
+def __read_peb_file(index_code, field_list=None):
+    file_path = '%s/index_peb/%s_peb.csv' % (
+        utility.DATA_ROOT, utility.convert_code_2_csvfilename(index_code))
+    df = pd.read_csv(file_path)
+
+    if field_list is None:
+        return df
+    else:
+        if 'date' not in field_list:
+            field_list.append('date')
+        return df[field_list]
 
 
 def __ffloat(data_in):

@@ -6,6 +6,8 @@ import xalpha as xa
 import matplotlib
 import pandas as pd
 import utility
+from pyecharts.charts import Line
+import index_peb.lxr_peb_analysis as lxr_peb_analysis
 
 # print(ut.DATA_ROOT)
 # print(ut.REPORT_ROOT)
@@ -18,8 +20,14 @@ import utility
 
 # f = xa.fundinfo('159915')
 
-str_num = '22,324.23'
-
-print(type(str))
-
+# 数据准备
+index_list, _ = utility.read_params(file='bt_params')
+index_list = index_list['index_code'].drop_duplicates().tolist()
+df = lxr_peb_analysis.get_indexes_mul_date_by_field(index_list, start_date='20100101', field='pe_ttm_median')
+line = (
+    Line()
+        .add_xaxis(df.index.tolist())
+        .add_yaxis('000905', df['000905'].tolist())
+        .add_yaxis('000300', df['000300'].tolist()))
+line.render()
 pass

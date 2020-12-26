@@ -40,7 +40,7 @@ metricsType
 '''
 
 
-def update_data(index_list, end_date=None):
+def update_data(index_codes, end_date=None):
     if end_date is None:
         end_date = date.today() - timedelta(1)
     url = "https://open.lixinger.com/api/a/index/fundamental"
