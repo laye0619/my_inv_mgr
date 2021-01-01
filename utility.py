@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 
 __curPath = os.path.abspath(os.path.dirname(__file__))
 __rootPath = __curPath[:__curPath.find("my_inv_mgr") + len("my_inv_mgr/")]
@@ -67,7 +68,13 @@ def convert_code_2_csvfilename(code):
 
 
 def back_2_original_code(code):
-    return code[:6]
+    if isinstance(code, float) and np.isnan(code):
+        code = ''
+    elif code.startswith('SH') or code.startswith('SZ'):
+        code = code[-6:]
+    else:
+        code = code[:6]
+    return code
 
 
 def get_name_from_ori_code(code):

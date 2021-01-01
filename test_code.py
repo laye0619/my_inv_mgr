@@ -20,16 +20,11 @@ import index_peb.lxr_peb_analysis as lxr_peb_analysis
 
 # f = xa.fundinfo('159915')
 
-# 数据准备
-index_list, _ = utility.read_params(file='bt_params')
-index_list = index_list['index_code'].drop_duplicates().tolist()
-df = lxr_peb_analysis.get_indexes_mul_date_by_field(index_list, start_date='20100101', field='pe_ttm_median')
-line = (
-    Line()
-        .add_xaxis(df.index.tolist())
-        .add_yaxis('000905', df['000905'].tolist())
-        .add_yaxis('000300', df['000300'].tolist()))
-line.render()
+strr = 'SH000905'
+
+if strr.startswith('SH') or strr.startswith('SZ'):
+    strr = strr[-6:]
+
 pass
 
 
