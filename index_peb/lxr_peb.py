@@ -61,7 +61,7 @@ def update_data(index_codes, end_date=None):
                 start_date = pd.to_datetime('2005-01-01')
             else:
                 start_date = pd.to_datetime(result_df['date'].iloc[-1]) + timedelta(1)
-            if end_date <= start_date:
+            if end_date < start_date:
                 continue
         else:
             print('init update: %s...' % index_code)
