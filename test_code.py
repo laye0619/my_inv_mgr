@@ -20,11 +20,12 @@ import index_peb.lxr_peb_analysis as lxr_peb_analysis
 
 # f = xa.fundinfo('159915')
 
-strr = 'SH000905'
+fond_list = ['006585',
+             '006060',
+             '008127',
+             '485011',
+             '001406']
 
-if strr.startswith('SH') or strr.startswith('SZ'):
-    strr = strr[-6:]
-
-pass
-
-
+for fond in fond_list:
+    fond_info = xa.fundinfo(fond)
+    print(fond_info.name)
