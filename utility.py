@@ -87,9 +87,14 @@ def get_cn_desc_from_index_peb_field(field_name):
     return result.loc[result['Field'] == field_name, 'Desc'].iloc[0]
 
 
+def handle_futures_raw_data(futures_data_file_name_list: list):
+    for futures_file_name in futures_data_file_name_list:
+        df_data = pd.read_csv('%s/futures_data/%s.csv' % (DATA_ROOT, futures_file_name))
+        df_data.rename(columns={'Unnamed: 0': 'datetime'}).to_csv(
+            '%s/futures_data/%s.csv' % (DATA_ROOT, futures_file_name), index=0)
+        pass
+
+
 if __name__ == '__main__':
-    # desc = convert_float_format(1234.5678)
-    df = pd.DataFrame([[1111.112, 2222.222, 3333.333, 4444.444], [44444.4444, 33333.333, 22222.222, 11111.111]],
-                      columns=['a', 'b', 'c', 'd'])
-    result = convert_float_for_dataframe_columns(df, ['b', 'd'], number=3)
-    pass
+    handle_futures_raw_data(['IC8888.CCFX', 'IC9999.CCFX', 'IF8888.CCFX', 'IF9999.CCFX', 'IH8888.CCFX', 'IH9999.CCFX'])
+
