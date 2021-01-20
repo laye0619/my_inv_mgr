@@ -43,8 +43,8 @@ while True:
         print('Processing date: %s...' % start_date.date())
         __config__['base']['start_date'] = start_date.strftime('%Y%m%d')
         __config__['base']['end_date'] = end_date.strftime('%Y%m%d')
-        t28_result = run_file('./bt_t28.py', __config__)
-        df_result = df_result.append(t28_result['sys_analyser']['summary'], ignore_index=True)
+        t_ind_result = run_file('bt_t_ind.py', __config__)
+        df_result = df_result.append(t_ind_result['sys_analyser']['summary'], ignore_index=True)
     start_date = start_date + timedelta(1)
 
-df_result.to_excel('%s/backtest/t28_batch_test_result.xlsx' % utility.REPORT_ROOT)
+df_result.to_excel('%s/backtest/t_ind_batch_test_result.xlsx' % utility.REPORT_ROOT)

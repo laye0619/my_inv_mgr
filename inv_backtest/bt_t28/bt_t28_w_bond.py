@@ -8,7 +8,7 @@ __config__ = {
         },
         "data-bundle-path": "/Users/i335644/.rqalpha/bundle",
         "start_date": "20130101",
-        "end_date": "20201201",
+        "end_date": "20201231",
     },
     "extra": {
         "log_level": "info",
@@ -32,7 +32,8 @@ __config__ = {
 def init(context):
     context.fired = False
     context.p_index_details, context.p_index_strategy = utility.read_params(file='bt_params')
-    context.p_CHECK_DATE = pd.date_range(context.config.base.start_date, context.config.base.end_date, freq='W-THU')
+    # context.p_CHECK_DATE = pd.date_range(context.config.base.start_date, context.config.base.end_date, freq='W-MON')
+    context.p_CHECK_DATE = pd.date_range(context.config.base.start_date, context.config.base.end_date, freq='d')
     context.p_TOTAL_VALUE_BUFFER = 0.99  # 留1%的钱给手续费倒腾
     # set tendency28 01_params
     context.p_t28_AIM1 = utility.convert_code_2_rqcode(
@@ -67,15 +68,15 @@ def __trans_tendency28(context):
     df1 = pd.DataFrame(history_bars(context.p_t28_AIM1, bar_count=50, frequency='1d', fields=['datetime', 'close']))
     df1['datetime'] = pd.to_datetime(df1['datetime'], format="%Y%m%d%H%M%S")
     up1 = (
-            (df1.iloc[-1].close - df1.iloc[-1 - context.p_t28_PREV].close)
-            / df1.iloc[-1 - context.p_t28_PREV].close
+            (df1.iloc[-2].close - df1.iloc[-2 - context.p_t28_PREV].close)
+            / df1.iloc[-2 - context.p_t28_PREV].close
             * 100
     )
     df2 = pd.DataFrame(history_bars(context.p_t28_AIM2, bar_count=50, frequency='1d', fields=['datetime', 'close']))
     df2['datetime'] = pd.to_datetime(df2['datetime'], format="%Y%m%d%H%M%S")
     up2 = (
-            (df2.iloc[-1].close - df2.iloc[-1 - context.p_t28_PREV].close)
-            / df2.iloc[-1 - context.p_t28_PREV].close
+            (df2.iloc[-2].close - df2.iloc[-2 - context.p_t28_PREV].close)
+            / df2.iloc[-2 - context.p_t28_PREV].close
             * 100
     )
     if up1 < context.p_t28_UP_THRESHOLD and up2 < context.p_t28_UP_THRESHOLD:

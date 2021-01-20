@@ -31,7 +31,7 @@ __config__ = {
 }
 
 start_date = pd.to_datetime('2011-01-01')
-each_period_years = 5
+each_period_years = 3
 df_result = pd.DataFrame()
 check_date = pd.date_range(start_date, datetime.now().date(), freq='W-THU')
 
@@ -43,8 +43,8 @@ while True:
         print('Processing date: %s...' % start_date.date())
         __config__['base']['start_date'] = start_date.strftime('%Y%m%d')
         __config__['base']['end_date'] = end_date.strftime('%Y%m%d')
-        portfolio_result = run_file('./bt_portfolio_t28_peb.py', __config__)
-        df_result = df_result.append(portfolio_result['sys_analyser']['summary'], ignore_index=True)
+        t28_result = run_file('bt_t28_w_bond.py', __config__)
+        df_result = df_result.append(t28_result['sys_analyser']['summary'], ignore_index=True)
     start_date = start_date + timedelta(1)
 
-df_result.to_excel('%s/backtest/bt_portfolio_t28_peb_batch_test_result.xlsx' % utility.REPORT_ROOT)
+df_result.to_excel('%s/backtest/t28_batch_test_result.xlsx' % utility.REPORT_ROOT)
