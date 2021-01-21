@@ -13,15 +13,15 @@ p_CHECK_DATE_list = [
     pd.date_range(start_date, end_date, freq='3d'),
     pd.date_range(start_date, end_date, freq='W-MON'),
     pd.date_range(start_date, end_date, freq='SM'),
-    pd.date_range(start_date, end_date, freq='M'),
-    pd.date_range(start_date, end_date, freq='Q'),
+    # pd.date_range(start_date, end_date, freq='M'),
+    # pd.date_range(start_date, end_date, freq='Q'),
 ]
 
 tasks = []
 for p_CHECK_DATE in p_CHECK_DATE_list:
-    for p_t28_PREV in range(5, 30, 5):
-        for p_t28_UP_THRESHOLD in range(3, 20, 2):
-            for p_t28_DIFF_THRESHOLD in range(3, 20, 2):
+    for p_t28_PREV in range(15, 31, 5):
+        for p_t28_UP_THRESHOLD in range(0, 11, 2):
+            for p_t28_DIFF_THRESHOLD in range(0, 11, 2):
                 config = {
                     "extra": {
                         "context_vars": {
