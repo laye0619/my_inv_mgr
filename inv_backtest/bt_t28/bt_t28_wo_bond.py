@@ -39,7 +39,7 @@ def init(context):
     context.p_t28_AIM2 = utility.convert_code_2_rqcode(
         context.p_index_details.loc[context.p_index_details['strategy'] == 'Tendency28', 'index_code'].iloc[1])
     context.p_t28_UP_THRESHOLD = 0.3
-    context.p_t28_DIFF_THRESHOLD = 0.8
+    context.p_t28_DIFF_THRESHOLD = 0.4
     context.p_t28_PREV = 20
     context.p_t28_STATUS = 0  # having status
 
