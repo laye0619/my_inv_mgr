@@ -8,7 +8,7 @@ import pandas as pd
 from rqalpha import run
 
 start_date = pd.to_datetime('2011-01-01')
-each_period_years = 3
+each_period_years = 5
 df_result = pd.DataFrame()
 check_date = pd.date_range(start_date, datetime.now().date(), freq='W-THU')
 
@@ -35,7 +35,7 @@ for date in check_date:
             "sys_analyser": {
                 "enabled": True,
                 "plot": False,
-                "output_file": "3_year_test_result/t_28_wo_bond_out-{start_date}.pkl".format(
+                "output_file": "5_year_test_result/t_28_wo_bond_out-{start_date}.pkl".format(
                     start_date=date.strftime('%Y%m%d'),
                 )
             },
@@ -58,7 +58,7 @@ def get_analysis_result():
     years = (pd.to_datetime(end_date) - pd.to_datetime(start_date)).days / 365
     results = []
 
-    for name in glob.glob("3_year_test_result/*.pkl"):
+    for name in glob.glob("5_year_test_result/*.pkl"):
         result_dict = pd.read_pickle(name)
         summary = result_dict["summary"]
         trades = result_dict['trades']
@@ -80,4 +80,4 @@ if __name__ == '__main__':
         for task in tasks:
             executor.submit(run_bt, task)
     get_analysis_result().sort_values(by='sharpe', ascending=False).to_excel(
-        '3_year_test_result/bt_t28_wo_bond_3years.xlsx', index=0)
+        '5_year_test_result/bt_t28_wo_bond_5years.xlsx', index=0)

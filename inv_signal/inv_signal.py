@@ -14,7 +14,7 @@ def t28_signal():
 
     # 处理t28
     p_t28_UP_THRESHOLD = 0.3
-    p_t28_DIFF_THRESHOLD = 0.8
+    p_t28_DIFF_THRESHOLD = 0.3
     p_t28_PREV = 20
 
     t28_list = df_params.loc[df_params['strategy'] == 'Tendency28', 'index_code'].tolist()
