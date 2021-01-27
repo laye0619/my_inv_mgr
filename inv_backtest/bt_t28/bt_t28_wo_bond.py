@@ -7,8 +7,8 @@ __config__ = {
             "STOCK": 1000 * 10000,
         },
         "data-bundle-path": "/Users/i335644/.rqalpha/bundle",
-        "start_date": "20130101",
-        "end_date": "20210101",
+        "start_date": "20180101",
+        "end_date": "20190131",
     },
     "extra": {
         "log_level": "info",
@@ -47,7 +47,7 @@ def init(context):
 def handle_bar(context, bar_dict):
     if pd.to_datetime(context.now.date()) not in context.p_CHECK_DATE:
         return
-    logger.info('每周执行所有策略 - 28轮动...')
+    logger.info('Strategy executing...')
     __trans_tendency28(context)
 
 
