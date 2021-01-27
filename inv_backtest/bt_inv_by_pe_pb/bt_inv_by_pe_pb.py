@@ -6,11 +6,11 @@ from datetime import timedelta
 __config__ = {
     "base": {
         "accounts": {
-            "STOCK": 1000 * 10000,
+            "STOCK": 10000 * 10000,
         },
         "data-bundle-path": "/Users/i335644/.rqalpha/bundle",
         "start_date": "20130101",
-        "end_date": "20200630",
+        "end_date": "20201231",
     },
     "extra": {
         "log_level": "info",
@@ -34,26 +34,17 @@ __config__ = {
 def init(context):
     context.fired = False
     context.p_index_details, context.p_index_strategy = utility.read_params(file='bt_params')
-    context.p_CHECK_DATE = pd.date_range(context.config.base.start_date, context.config.base.end_date, freq='W-THU')
-    context.p_TOTAL_VALUE_BUFFER = 0.99  # 留1%的钱给手续费倒腾
+    context.p_CHECK_DATE = pd.date_range(context.config.base.start_date, context.config.base.end_date, freq='W-MON')
     # set inv by pe pb 01_params
-    context.p_inv_by_pe_pb_AIM0 = '000022.XSHG'
     context.p_inv_by_pe_pb_AIM_LIST = context.p_index_details.loc[
         context.p_index_details['strategy'] == 'InvByPePb', 'index_code'].apply(utility.convert_code_2_rqcode)
-    context.p_inv_by_pe_pb_LOW_THRESHOLD = 0.2  # 买入估值条件阈值
-    context.p_inv_by_pe_pb_HIGH_THRESHOLD = 0.85  # 卖出估值条件阈值
-    context.p_inv_by_pe_pb_CALL_METHOD = 'pe_ttm_y10_median'
+    context.p_inv_by_pe_pb_LOW_THRESHOLD = 0.12  # 买入估值条件阈值
+    context.p_inv_by_pe_pb_HIGH_THRESHOLD = 0.9  # 卖出估值条件阈值
+    context.p_inv_by_pe_pb_CALL_METHOD = 'pe_ttm_y10_mcw'
     context.p_inv_by_pe_pb_PEB_LEVEL = __get_peb_level(context)
 
 
 def handle_bar(context, bar_dict):
-    # 首次建仓
-    if not context.fired:
-        logger.info('首次建仓...')
-        inv_by_pe_pb_amount = context.config.base.accounts['STOCK'] * context.p_TOTAL_VALUE_BUFFER
-        order_target_value(context.p_inv_by_pe_pb_AIM0, inv_by_pe_pb_amount)
-        context.fired = True
-
     if pd.to_datetime(context.now.date()) not in context.p_CHECK_DATE:
         return
     logger.info('每周执行所有策略 - 底仓估值策略...')
@@ -74,15 +65,12 @@ def __trans_inv_by_pe_pb(context):
     for sell_code in to_sell:  # 卖出
         sell_rqcode = utility.convert_code_2_rqcode(sell_code)
         if sell_rqcode in current_holding['基金代码'].tolist():  # 有持仓，卖出
-            to_sell_value = get_position(sell_rqcode).market_value
-            order_value(sell_rqcode, -to_sell_value)
-            order_value(context.p_inv_by_pe_pb_AIM0, to_sell_value)
+            order_target_percent(sell_rqcode, 0)
 
     for buy_code in to_buy:  # 买入
         buy_rqcode = utility.convert_code_2_rqcode(buy_code)
         if buy_rqcode not in current_holding['基金代码'].tolist():  # 没有持仓，买入
-            to_buy_value = get_position(context.p_inv_by_pe_pb_AIM0).market_value / (num_all - num_holding)
-            order_value(context.p_inv_by_pe_pb_AIM0, -to_buy_value)
+            to_buy_value = context.portfolio.cash / (num_all - num_holding)
             order_value(buy_rqcode, to_buy_value)
 
 
