@@ -20,12 +20,15 @@ import index_peb.lxr_peb_analysis as lxr_peb_analysis
 
 # f = xa.fundinfo('159915')
 
-fond_list = ['006585',
-             '006060',
-             '008127',
-             '485011',
-             '001406']
+# fond_list = ['006585',
+#              '006060',
+#              '008127',
+#              '485011',
+#              '001406']
+#
+# for fond in fond_list:
+#     fond_info = xa.fundinfo(fond)
+#     print(fond_info.name)
 
-for fond in fond_list:
-    fond_info = xa.fundinfo(fond)
-    print(fond_info.name)
+df = pd.read_excel('01_params/Inv_Asset_Record.xlsx', sheet_name='E_TransRecord')
+pass
