@@ -1,6 +1,7 @@
 import datetime
 import utility
 import tushare as ts
+import pandas as pd
 from index_peb import lxr_peb_analysis as peb
 
 pro = ts.pro_api('602e5ad960d66ab8b1f3c13b4fd746f5323ff808b0820768b02c6da3')
@@ -40,6 +41,10 @@ def t28_signal():
 
     print('%s up: %s; %s up: %s' % (
         utility.convert_code_2_tusharecode(t28_list[0]), up1, utility.convert_code_2_tusharecode(t28_list[1]), up2))
+
+    print('t: %s - %s' % (df1.iloc[0].close, df2.iloc[0].close))
+    print('t-19: %s - %s' % (df1.iloc[p_t28_PREV-1].close, df2.iloc[p_t28_PREV-1].close))
+    print('t-20: %s - %s' % (df1.iloc[p_t28_PREV].close, df2.iloc[p_t28_PREV].close))
 
 
 def inv_by_pe_pb_signal():
