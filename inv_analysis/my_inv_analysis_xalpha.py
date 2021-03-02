@@ -27,22 +27,27 @@ def generate_my_inv_month_end_closing(df_analysis, period, analysis_date):
     df_month_end_closing_template = df_month_end_closing_template[['基金名称', '基金代码', '基金现值']]
     df_month_end_closing_template.rename(columns={'基金名称': '项目', '基金代码': '代码', '基金现值': '现值'}, inplace=True)
     master_data, _, _ = utility.read_params(file='Inv_Asset_Record')
+    master_data = master_data[master_data['Validation'] == 'Y']  # 删除所有不在用的投资项目
     non_fund_list = master_data.loc[master_data['code'].isna(), 'name']
     for name in non_fund_list:
         df_month_end_closing_template = df_month_end_closing_template.append({'项目': name}, ignore_index=True)
 
     type1_list = []
     type2_list = []
+    type3_list = []
     for index, row in df_month_end_closing_template.iterrows():
         type1 = master_data.loc[master_data['name'] == row['项目'], 'type_1'].iloc[0]
         type1_list.append(type1)
         type2 = master_data.loc[master_data['name'] == row['项目'], 'type_2'].iloc[0]
         type2_list.append(type2)
+        type3 = master_data.loc[master_data['name'] == row['项目'], 'type_3'].iloc[0]
+        type3_list.append(type3)
     df_month_end_closing_template['分类1'] = type1_list
     df_month_end_closing_template['分类2'] = type2_list
+    df_month_end_closing_template['分类3'] = type3_list
     df_month_end_closing_template['期间'] = period
     df_month_end_closing_template['记录日期'] = analysis_date
-    df_month_end_closing_template = df_month_end_closing_template[['期间', '记录日期', '项目', '代码', '分类1', '分类2', '现值']]
+    df_month_end_closing_template = df_month_end_closing_template[['期间', '记录日期', '项目', '代码', '分类1', '分类2', '分类3', '现值']]
     return df_month_end_closing_template
 
 
@@ -57,6 +62,7 @@ def save_analysis_and_month_end_closing_template(period, date=None):
         date = yesterdayobj()
     sys_open = get_my_inv_analysis(type='open')
     df_analysis = sys_open.combsummary(date=date).sort_values(by="基金现值", ascending=False)
+    df_analysis = df_analysis[df_analysis['基金现值'] != 0]
     df_month_end_closing_template = generate_my_inv_month_end_closing(df_analysis, period=period,
                                                                       analysis_date=date.strftime('%Y/%m/%d'))
     df_month_end_closing_template = utility.convert_float_for_dataframe_columns(df_month_end_closing_template, ['现值'])
@@ -87,9 +93,9 @@ def update_weekly_inv_report():
 
 
 if __name__ == '__main__':
-    # save_analysis_and_month_end_closing_template(period='2021/01')
+    save_analysis_and_month_end_closing_template(period='2021/01')
     # update_weekly_inv_report()
 
-    inv_report = get_my_inv_analysis()
-    inv_report.combsummary().to_excel('report.xlsx', index=0)
+    # inv_report = get_my_inv_analysis()
+    # inv_report.combsummary().to_excel('report.xlsx', index=0)
     pass
