@@ -10,7 +10,7 @@ import tushare as ts
 
 
 def turnover_rate(ts_pro):
-    yesterday = date.today() - timedelta(1)
+    yesterday = date.today() - pd.tseries.offsets.BDay(1)
     df_sample = ts_pro.index_dailybasic(trade_date=yesterday.strftime("%Y%m%d"),
                                         fields='ts_code,trade_date,turnover_rate_f')
     code_list = df_sample['ts_code'].tolist()
@@ -39,5 +39,5 @@ def turnover_rate(ts_pro):
 
 if __name__ == '__main__':
     ts_pro = ts.pro_api('602e5ad960d66ab8b1f3c13b4fd746f5323ff808b0820768b02c6da3')
-    turnover_rate(ts_pro)
+    result = turnover_rate(ts_pro)
     pass
