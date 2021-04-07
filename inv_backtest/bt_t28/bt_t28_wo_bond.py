@@ -7,8 +7,8 @@ __config__ = {
             "STOCK": 1000 * 10000,
         },
         "data-bundle-path": "/Users/i335644/.rqalpha/bundle",
-        "start_date": "20200601",
-        "end_date": "20210301",
+        "start_date": "20130101",
+        "end_date": "20210401",
     },
     "extra": {
         "log_level": "info",
@@ -38,7 +38,7 @@ def init(context):
         context.p_index_details.loc[context.p_index_details['strategy'] == 'Tendency28', 'index_code'].iloc[0])
     context.p_t28_AIM2 = utility.convert_code_2_rqcode(
         context.p_index_details.loc[context.p_index_details['strategy'] == 'Tendency28', 'index_code'].iloc[1])
-    context.p_t28_UP_THRESHOLD = 0.3
+    context.p_t28_UP_THRESHOLD = 0.4
     context.p_t28_DIFF_THRESHOLD = 0.3
     context.p_t28_PREV = 20
     context.p_t28_STATUS = 0  # having status
