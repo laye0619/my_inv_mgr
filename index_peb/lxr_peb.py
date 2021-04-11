@@ -118,7 +118,7 @@ def update_data(index_codes, end_date=None):
         headers = {"Content-Type": "application/json"}
         res = requests.post(url=url, data=json.dumps(params), headers=headers)
         dt = res.json()
-        if dt['message'] == 'success':
+        if dt['message'] == 'success' and len(dt['data']) != 0:
             code = dt['data'][0]['stockCode']
             if code == '1000004':
                 code = '000001'
