@@ -7,8 +7,8 @@ __config__ = {
             "STOCK": 1000 * 10000,
         },
         "data-bundle-path": "/Users/i335644/.rqalpha/bundle",
-        "start_date": "20120101",
-        "end_date": "20210401",
+        "start_date": "20210101",
+        "end_date": "20210501",
     },
     "extra": {
         "log_level": "info",
