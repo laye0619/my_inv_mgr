@@ -93,9 +93,9 @@ def update_weekly_inv_report():
 
 
 if __name__ == '__main__':
-    # save_analysis_and_month_end_closing_template(period='2021/04')
+    save_analysis_and_month_end_closing_template(period='2021/05')
     # update_weekly_inv_report()
 
-    inv_report = get_my_inv_analysis()
-    inv_report.combsummary().to_excel('report.xlsx', index=0)
+    # inv_report = get_my_inv_analysis()
+    # inv_report.combsummary().to_excel('report.xlsx', index=0)
     pass

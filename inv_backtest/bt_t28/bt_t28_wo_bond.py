@@ -7,8 +7,8 @@ __config__ = {
             "STOCK": 1000 * 10000,
         },
         "data-bundle-path": "/Users/i335644/.rqalpha/bundle",
-        "start_date": "20210101",
-        "end_date": "20210501",
+        "start_date": "20130101",
+        "end_date": "20210601",
     },
     "extra": {
         "log_level": "info",
@@ -17,6 +17,7 @@ __config__ = {
         "sys_analyser": {
             "plot": True,
             "benchmark": "000300.XSHG",
+            # "benchmark": "399006.XSHE",
             "report_save_path": '%s/backtest/' % utility.REPORT_ROOT,
         },
         'sys_simulation': {
