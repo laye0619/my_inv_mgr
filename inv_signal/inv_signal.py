@@ -31,13 +31,13 @@ def t28_signal():
     up2 = (df2.iloc[0].close - df2.iloc[p_t28_PREV].close) / df2.iloc[p_t28_PREV].close * 100
 
     if up1 < p_t28_UP_THRESHOLD and up2 < p_t28_UP_THRESHOLD:
-        print('Today is: %s, T28 operation is: 调仓至货币基金/债券' % datetime.date.today())
+        print('Today is: %s, T28 operation is: 调仓至货币基金/债券' % df1['trade_date'][0])
 
     elif up1 > p_t28_UP_THRESHOLD and up1 > up2:
-        print('Today is: %s, T28 operation is: 调仓至%s' % (datetime.date.today(), df1.iloc[0].ts_code))
+        print('Today is: %s, T28 operation is: 调仓至%s' % (df1['trade_date'][0], df1.iloc[0].ts_code))
 
     elif up2 > p_t28_UP_THRESHOLD and up2 > up1:
-        print('Today is: %s, T28 operation is: 调仓至%s' % (datetime.date.today(), df2.iloc[0].ts_code))
+        print('Today is: %s, T28 operation is: 调仓至%s' % (df1['trade_date'][0], df2.iloc[0].ts_code))
 
     print('%s up: %s; %s up: %s' % (
         utility.convert_code_2_tusharecode(t28_list[0]), up1, utility.convert_code_2_tusharecode(t28_list[1]), up2))
