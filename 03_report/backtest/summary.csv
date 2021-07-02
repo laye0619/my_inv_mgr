@@ -1,8 +1,8 @@
 STOCK,10000000.0
 alpha,0.234
 annualized_returns,0.3376
-benchmark_annualized_returns,0.0969
-benchmark_total_returns,1.1172
+benchmark_annualized_returns,0.09694
+benchmark_total_returns,1.117234
 beta,0.593
 cash,772.6377
 downside_risk,0.16
